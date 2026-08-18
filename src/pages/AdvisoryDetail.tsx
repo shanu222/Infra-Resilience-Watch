@@ -142,7 +142,7 @@ export default function AdvisoryDetail() {
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-6 min-w-0">
+      <div id="advisory-publish-view" className="advisory-publish-view max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-6 min-w-0">
         <div className="advisory-preview-frame rounded-xl sm:rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
           <div className="advisory-preview-inner">
             <AdvisoryDocument advisory={advisory} />

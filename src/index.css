@@ -858,81 +858,18 @@ body {
   min-width: 0;
 }
 
-/* A4 export stage — off-screen clone used for PDF + print */
-.advisory-export-stage {
-  position: fixed;
-  left: -12000px;
-  top: 0;
-  width: 210mm;
-  min-width: 210mm;
-  max-width: 210mm;
-  background: #ffffff;
-  z-index: 2147483646;
-  pointer-events: none;
-  overflow: visible;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+/* PDF capture — match publish preview layout */
+body.advisory-capturing .advisory-publish-view {
+  overflow: visible !important;
 }
 
-.advisory-export-frame {
-  width: 210mm;
-  min-width: 210mm;
-  max-width: 210mm;
-  background: #ffffff;
-}
-
-.advisory-export-stage .advisory-doc,
-.advisory-export-stage .advisory-doc-export {
-  width: 210mm !important;
-  max-width: 210mm !important;
-  min-width: 210mm !important;
-  margin: 0 !important;
-  border-radius: 0 !important;
+body.advisory-capturing .advisory-preview-frame {
   overflow: visible !important;
   box-shadow: none !important;
-  background: transparent !important;
 }
 
-.advisory-export-stage .advisory-doc .relative.min-h-full {
-  min-height: auto !important;
-}
-
-.advisory-export-stage .doc-bg-layer {
-  position: absolute !important;
-  inset: 0 !important;
-  min-height: 100% !important;
-}
-
-.advisory-export-stage .doc-content-layer {
-  position: relative !important;
-  min-height: auto !important;
-}
-
-.advisory-export-stage .print-only {
-  display: block !important;
-}
-
-.advisory-export-stage header img {
-  background: #ffffff !important;
-}
-
-.advisory-export-stage .doc-section {
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
-
-.advisory-export-stage .doc-video-embed,
-.advisory-export-stage .doc-video-block iframe {
-  display: none !important;
-}
-
-.advisory-export-stage .doc-video-fallback {
-  display: block !important;
-}
-
-.advisory-export-stage img {
-  max-width: 100% !important;
-  height: auto !important;
+body.advisory-capturing .advisory-doc {
+  overflow: visible !important;
 }
 
 /* ============================================================
@@ -988,41 +925,50 @@ input, select, textarea { outline: none; }
 
   @page {
     size: A4 portrait;
-    margin: 0;
+    margin: 8mm;
   }
 
-  /* A4 advisory print — only the export stage is visible */
-  body.advisory-printing #root {
+  /* Print publish view — same document as on-screen preview */
+  body.advisory-printing .no-print {
     display: none !important;
   }
 
-  body.advisory-printing #advisory-export-stage {
-    display: block !important;
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-    width: 210mm !important;
-    min-width: 210mm !important;
-    max-width: 210mm !important;
-    margin: 0 auto !important;
-    padding: 0 !important;
-    pointer-events: none !important;
-    overflow: visible !important;
-    page-break-after: avoid;
+  body.advisory-printing .portal-shell,
+  body.advisory-printing .portal-content,
+  body.advisory-printing main,
+  body.advisory-printing .min-h-screen {
+    min-height: 0 !important;
+    height: auto !important;
+    background: white !important;
   }
 
-  body.advisory-printing .advisory-export-frame {
-    width: 210mm !important;
+  body.advisory-printing .advisory-publish-view {
+    max-width: none !important;
+    width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
   }
 
-  body.advisory-printing .advisory-doc,
-  body.advisory-printing .advisory-doc-export {
-    width: 210mm !important;
-    max-width: 210mm !important;
+  body.advisory-printing .advisory-preview-frame {
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  body.advisory-printing .advisory-preview-inner {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.advisory-printing .advisory-doc {
+    width: 100% !important;
+    max-width: 100% !important;
     margin: 0 !important;
     overflow: visible !important;
     border-radius: 0 !important;
@@ -1031,6 +977,10 @@ input, select, textarea { outline: none; }
 
   body.advisory-printing .advisory-doc .relative.min-h-full {
     min-height: auto !important;
+  }
+
+  body.advisory-printing .doc-bg-layer {
+    min-height: 100% !important;
   }
 
   body.advisory-printing .doc-section {
@@ -1068,12 +1018,16 @@ input, select, textarea { outline: none; }
     break-inside: avoid;
   }
 
+  body.advisory-printing header img {
+    background: #ffffff !important;
+  }
+
   a[href]::after,
   a[href]::before {
     content: none !important;
   }
 
-  /* Legacy fallback when printing without export stage */
+  /* Fallback when printing without advisory-printing class */
   #root,
   .portal-shell,
   .portal-content,
