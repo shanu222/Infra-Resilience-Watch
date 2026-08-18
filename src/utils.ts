@@ -141,10 +141,7 @@ export function sanitizeDocText(text: string): string {
     .trim()
 }
 
-/**
- * Print / PDF export — implemented in advisoryExport.ts (A4 layout).
- */
-export { downloadAdvisoryPdf, printAdvisoryDocument } from './advisoryExport'
+/** PDF generation lives in src/pdf (vector jsPDF document, not a screenshot). */
 
 export function kindToSection(kind: ContentKind): string {
   if (kind === 'case-study') return 'case-studies'

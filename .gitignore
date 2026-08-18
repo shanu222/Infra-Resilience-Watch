@@ -13,6 +13,8 @@ logs/
 *.log
 .claude-replay.*
 .tmp-*
+verify-output.pdf
+scripts/.advisory-pdf.bundle.mjs
 
 # Platform-managed agentplat state, not project source. In the
 # client-initiated single-repo workspace layout (make's `Path: "."` spec) the

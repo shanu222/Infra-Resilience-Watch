@@ -858,20 +858,6 @@ body {
   min-width: 0;
 }
 
-/* PDF capture — match publish preview layout */
-body.advisory-capturing .advisory-publish-view {
-  overflow: visible !important;
-}
-
-body.advisory-capturing .advisory-preview-frame {
-  overflow: visible !important;
-  box-shadow: none !important;
-}
-
-body.advisory-capturing .advisory-doc {
-  overflow: visible !important;
-}
-
 /* ============================================================
    FOCUS & ACCESSIBILITY
    ============================================================ */
@@ -895,25 +881,41 @@ input, select, textarea { outline: none; }
 }
 
 /* ============================================================
-   PRINT
+   PRINT — browser Ctrl+P / Save as PDF fallback.
+   The Print button generates the real PDF instead; these rules
+   keep the page-level print output clean and A4-correct.
    ============================================================ */
 .print-only { display: none; }
 
 @media print {
+  /* Portal chrome never prints */
   .no-print,
+  .glass-nav,
+  .glass-toolbar,
+  .glass-sidebar,
   .portal-bg,
   .portal-overlay,
   .portal-bg-photo,
+  nav,
+  header.sticky,
+  footer.no-print,
+  .modal-overlay,
   .portal-scifi-grid::before,
   .portal-scifi-grid::after {
     display: none !important;
   }
 
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
   html,
   body {
-    background: white !important;
+    background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
+    width: auto !important;
     min-height: 0 !important;
     height: auto !important;
     overflow: visible !important;
@@ -923,148 +925,94 @@ input, select, textarea { outline: none; }
 
   .print-only { display: block !important; }
 
-  @page {
-    size: A4 portrait;
-    margin: 8mm;
-  }
-
-  /* Print publish view — same document as on-screen preview */
-  body.advisory-printing .no-print {
-    display: none !important;
-  }
-
-  body.advisory-printing .portal-shell,
-  body.advisory-printing .portal-content,
-  body.advisory-printing main,
-  body.advisory-printing .min-h-screen {
+  /* Content-driven height — never viewport-driven, which caused blank sheets */
+  #root,
+  .portal-shell,
+  .portal-content,
+  main,
+  .min-h-screen,
+  .advisory-publish-view {
+    background: #ffffff !important;
     min-height: 0 !important;
     height: auto !important;
-    background: white !important;
-  }
-
-  body.advisory-printing .advisory-publish-view {
     max-width: none !important;
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
-  }
-
-  body.advisory-printing .advisory-preview-frame {
     overflow: visible !important;
     box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
   }
 
-  body.advisory-printing .advisory-preview-inner {
+  .advisory-preview-frame,
+  .advisory-preview-inner,
+  .advisory-doc {
     width: 100% !important;
     max-width: 100% !important;
+    min-width: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-  }
-
-  body.advisory-printing .advisory-doc {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    overflow: visible !important;
+    border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    overflow: visible !important;
   }
 
-  body.advisory-printing .advisory-doc .relative.min-h-full {
-    min-height: auto !important;
+  .advisory-doc .relative.min-h-full,
+  .doc-content-layer {
+    min-height: 0 !important;
   }
 
-  body.advisory-printing .doc-bg-layer {
+  .doc-bg-layer {
     min-height: 100% !important;
   }
 
-  body.advisory-printing .doc-section {
+  /* Page-break discipline */
+  .doc-section,
+  figure,
+  .doc-video-block {
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  body.advisory-printing .doc-header {
+  .doc-header,
+  h1, h2, h3 {
     break-after: avoid;
     page-break-after: avoid;
   }
 
-  body.advisory-printing .doc-bg-layer,
-  body.advisory-printing .doc-content-layer,
-  body.advisory-printing .doc-section,
-  body.advisory-printing header.doc-header,
-  body.advisory-printing .advisory-doc footer {
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  header img {
+    background: #ffffff !important;
+  }
+
+  .doc-bg-layer,
+  .doc-content-layer,
+  .doc-section,
+  header.doc-header,
+  .advisory-doc footer {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  body.advisory-printing .doc-video-embed,
-  body.advisory-printing .doc-video-block iframe {
+  /* Embedded players cannot print — show the static fallback instead */
+  .doc-video-embed,
+  .doc-video-block iframe {
     display: none !important;
   }
 
-  body.advisory-printing .doc-video-fallback {
+  .doc-video-fallback {
     display: block !important;
-  }
-
-  body.advisory-printing img {
-    max-width: 100% !important;
-    height: auto !important;
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
-  body.advisory-printing header img {
-    background: #ffffff !important;
   }
 
   a[href]::after,
   a[href]::before {
     content: none !important;
-  }
-
-  /* Fallback when printing without advisory-printing class */
-  #root,
-  .portal-shell,
-  .portal-content,
-  main,
-  .min-h-screen {
-    background: white !important;
-    min-height: 0 !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  .advisory-preview-frame {
-    overflow: visible !important;
-    box-shadow: none !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    max-width: none !important;
-    width: 100% !important;
-  }
-
-  .advisory-preview-inner {
-    min-width: 0 !important;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  .advisory-doc {
-    box-shadow: none !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    max-width: none !important;
-    width: 100% !important;
-    margin: 0 !important;
-    overflow: visible !important;
   }
 }
 

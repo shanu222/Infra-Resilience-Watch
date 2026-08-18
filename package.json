@@ -7,11 +7,11 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "verify:pdf": "node scripts/verify-pdf.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
-    "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.31.0",
     "react": "^19.0.0",

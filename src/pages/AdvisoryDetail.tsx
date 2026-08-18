@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { Download, Printer, Share2, ArrowLeft, Shield, Clock, Eye } from 'lucide-react'
+import { Share2, ArrowLeft, Shield, Clock, Eye } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import AdvisoryDocument from '../components/AdvisoryDocument'
+import DocumentActions from '../components/DocumentActions'
 import SeverityBadge from '../components/SeverityBadge'
 import WatchCard from '../components/WatchCard'
-import { relatedItems, userPathFor, isContentLive, printAdvisoryDocument, downloadAdvisoryPdf } from '../utils'
+import { relatedItems, userPathFor, isContentLive } from '../utils'
 import { BRAND } from '../data/constants'
 
 export default function AdvisoryDetail() {
@@ -25,7 +26,6 @@ export default function AdvisoryDetail() {
   }, [advisory?.id])
 
   const inUserPortal = !location.pathname.startsWith('/admin')
-  const [pdfLoading, setPdfLoading] = useState(false)
 
   if (!advisory) {
     return (
@@ -40,25 +40,6 @@ export default function AdvisoryDetail() {
         </div>
       </div>
     )
-  }
-
-  async function handlePrint() {
-    try {
-      await printAdvisoryDocument(advisory!.title)
-    } catch {
-      alert('Could not open print view. Please try again.')
-    }
-  }
-
-  async function handleDownloadPdf() {
-    setPdfLoading(true)
-    try {
-      await downloadAdvisoryPdf(advisory!.title || 'infrastructure-advisory')
-    } catch {
-      alert('Could not generate PDF. Please try again or use Print → Save as PDF.')
-    } finally {
-      setPdfLoading(false)
-    }
   }
 
   function handleShare() {
@@ -99,7 +80,7 @@ export default function AdvisoryDetail() {
               <SeverityBadge severity={advisory.severity} size="sm" />
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-start gap-2 flex-wrap">
             <div className="sm:hidden shrink-0">
               <SeverityBadge severity={advisory.severity} size="sm" />
             </div>
@@ -111,24 +92,7 @@ export default function AdvisoryDetail() {
               <Share2 size={14} />
               <span className="hidden sm:inline">Share</span>
             </button>
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-all flex-1 sm:flex-none min-w-[4.5rem]"
-            >
-              <Printer size={14} />
-              <span className="hidden sm:inline">Print</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleDownloadPdf}
-              disabled={pdfLoading}
-              className="btn-3d btn-3d-primary flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm flex-1 sm:flex-none min-w-[4.5rem] disabled:opacity-60"
-            >
-              <Download size={14} />
-              <span className="hidden sm:inline">{pdfLoading ? 'Generating…' : 'Download PDF'}</span>
-              <span className="sm:hidden">{pdfLoading ? '…' : 'PDF'}</span>
-            </button>
+            <DocumentActions advisory={advisory} />
           </div>
         </div>
       </div>
@@ -179,13 +143,11 @@ export default function AdvisoryDetail() {
                 </span>
               )}
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap items-start gap-3">
               <button type="button" onClick={handleShare} className="flex items-center gap-1.5 text-blue-700 hover:text-blue-800 font-medium">
                 <Share2 size={12} /> Share
               </button>
-              <button type="button" onClick={handlePrint} className="flex items-center gap-1.5 text-slate-700 hover:text-slate-800 font-medium">
-                <Printer size={12} /> Print
-              </button>
+              <DocumentActions advisory={advisory} compact />
             </div>
           </div>
         </div>

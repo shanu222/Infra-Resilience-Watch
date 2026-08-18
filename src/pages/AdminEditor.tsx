@@ -4,6 +4,7 @@ import { Save, Globe, Eye, ChevronLeft, X, Plus, Trash2, Star, Upload, BookOpen,
 import { useApp } from '../contexts/AppContext'
 import AdminLayout from '../components/AdminLayout'
 import AdvisoryDocument from '../components/AdvisoryDocument'
+import DocumentActions from '../components/DocumentActions'
 import { PROVINCE_NAMES, getDistricts } from '../data/pakistan'
 import { HAZARD_TEMPLATES } from '../data/templates'
 import { HAZARDS, ADVISORY_TYPES, SEVERITIES, INFRA_TYPES, ISSUE_TYPES, CONTENT_KINDS, KIND_LABEL } from '../data/constants'
@@ -867,6 +868,9 @@ export default function AdminEditor() {
                 <button onClick={() => handleSave(true)} className="btn-3d btn-3d-green flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm">
                   <Globe size={14} /> Publish
                 </button>
+              </div>
+              <div className="mb-4">
+                <DocumentActions advisory={previewAdvisory} />
               </div>
               <div className="advisory-preview-frame rounded-2xl border border-slate-200 shadow-lg mx-auto">
                 <div className={`advisory-preview-inner ${previewMode === 'mobile' ? 'max-w-sm mx-auto' : ''}`}>
