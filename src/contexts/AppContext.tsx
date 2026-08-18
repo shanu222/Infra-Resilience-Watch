@@ -168,7 +168,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               setState(applyRemote(cloud))
               setCloudError(null)
             })
-            .catch(err => setCloudError(cloudErrorMessage(err)))
+            .catch(err => console.warn('Live update failed', cloudErrorMessage(err)))
         })
       : () => {}
 

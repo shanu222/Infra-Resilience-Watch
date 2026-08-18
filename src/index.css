@@ -67,23 +67,63 @@ body {
 .btn-3d-cyan { background: linear-gradient(180deg, #3CCBE3 0%, #16B8D4 55%, #0E8FA8 100%); }
 .btn-3d-green { background: linear-gradient(180deg, #22A36E 0%, #168A5B 60%, #0F6B46 100%); }
 
+/* Solid, readable content panels (not ghosted over background) */
 .glass-panel {
-  background: rgba(255,255,255,0.58);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255,255,255,0.42);
-  box-shadow: 0 18px 40px rgba(11, 31, 58, 0.08);
+  background: linear-gradient(165deg, #ffffff 0%, #f8fbff 55%, #eef6ff 100%);
+  border: 1px solid rgba(23, 105, 170, 0.14);
+  box-shadow: 0 14px 36px rgba(11, 31, 58, 0.12), 0 2px 0 rgba(255, 255, 255, 0.9) inset;
+}
+
+.glass-panel-error {
+  background: linear-gradient(165deg, #fff5f5 0%, #fee2e2 100%);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  color: #991b1b;
+}
+
+.glass-panel-success {
+  background: linear-gradient(165deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 1px solid rgba(22, 138, 91, 0.35);
+  color: #14532d;
+}
+
+.glass-panel-warning {
+  background: linear-gradient(165deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #92400e;
 }
 
 .premium-card {
-  background: rgba(255,255,255,0.72);
-  border: 1px solid rgba(23, 105, 170, 0.12);
-  box-shadow: 0 10px 28px rgba(11, 31, 58, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: #ffffff;
+  border: 1px solid rgba(23, 105, 170, 0.16);
+  box-shadow: 0 10px 28px rgba(11, 31, 58, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 .premium-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 18px 36px rgba(11, 31, 58, 0.12);
+  border-color: rgba(22, 184, 212, 0.45);
+  box-shadow: 0 18px 36px rgba(11, 31, 58, 0.14);
+}
+
+.login-panel {
+  background: linear-gradient(160deg, #ffffff 0%, #f0f9ff 48%, #e0f2fe 100%);
+  border: 1px solid rgba(23, 105, 170, 0.2);
+  box-shadow: 0 24px 48px rgba(11, 31, 58, 0.22);
+}
+
+.login-field {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0b1f3a;
+}
+
+.login-field:focus {
+  border-color: #16b8d4;
+  box-shadow: 0 0 0 3px rgba(22, 184, 212, 0.2);
+}
+
+.hero-band {
+  background: linear-gradient(135deg, rgba(11, 31, 58, 0.88) 0%, rgba(23, 105, 170, 0.78) 55%, rgba(14, 116, 144, 0.72) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .severity-normal { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
@@ -139,11 +179,11 @@ body {
 }
 
 .portal-bg-user .portal-overlay {
-  background: linear-gradient(180deg, rgba(11, 31, 58, 0.22) 0%, rgba(11, 31, 58, 0.1) 42%, rgba(11, 31, 58, 0.16) 100%);
+  background: linear-gradient(180deg, rgba(11, 31, 58, 0.38) 0%, rgba(11, 31, 58, 0.22) 45%, rgba(11, 31, 58, 0.32) 100%);
 }
 
 .portal-bg-admin .portal-overlay {
-  background: linear-gradient(180deg, rgba(11, 31, 58, 0.2) 0%, rgba(11, 31, 58, 0.12) 55%, rgba(11, 31, 58, 0.22) 100%);
+  background: linear-gradient(180deg, rgba(11, 31, 58, 0.36) 0%, rgba(11, 31, 58, 0.24) 55%, rgba(11, 31, 58, 0.34) 100%);
 }
 
 .portal-content {
@@ -154,16 +194,15 @@ body {
 }
 
 .glass-nav {
-  background: rgba(11, 31, 58, 0.62);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(11, 31, 58, 0.94) 0%, rgba(15, 45, 78, 0.92) 100%);
+  border-bottom: 1px solid rgba(22, 184, 212, 0.28);
+  box-shadow: 0 8px 24px rgba(11, 31, 58, 0.25);
 }
 
 .glass-sidebar {
-  background: rgba(11, 31, 58, 0.62);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: linear-gradient(180deg, rgba(11, 31, 58, 0.96) 0%, rgba(15, 45, 78, 0.94) 100%);
+  border-right: 1px solid rgba(22, 184, 212, 0.2);
+  box-shadow: 8px 0 24px rgba(11, 31, 58, 0.2);
 }
 
 .table-scroll {
@@ -173,10 +212,8 @@ body {
 }
 
 .glass-toolbar {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  background: #ffffff;
+  border-bottom: 1px solid rgba(23, 105, 170, 0.12);
   box-shadow: 0 8px 24px rgba(11, 31, 58, 0.08);
 }
 
@@ -190,8 +227,12 @@ body {
 }
 
 .user-ink {
-  color: #0B1F3A;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  color: #ffffff;
+  text-shadow: 0 1px 10px rgba(11, 31, 58, 0.45);
+}
+
+.user-ink-muted {
+  color: #e2e8f0;
 }
 
 .modal-sheet {

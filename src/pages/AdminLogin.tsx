@@ -3,6 +3,7 @@ import { Shield, Eye, EyeOff, LogIn } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { useNavigate } from 'react-router-dom'
 import PortalBackground from '../components/PortalBackground'
+import { pingCloud } from '../data/cloud'
 
 export default function AdminLogin() {
   const { login, isAuthenticated, cloudEnabled, ready } = useApp()
@@ -12,21 +13,47 @@ export default function AdminLogin() {
   const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [cloudStatus, setCloudStatus] = useState<'checking' | 'ok' | 'fail'>('checking')
+  const [cloudStatusMsg, setCloudStatusMsg] = useState('')
 
   useEffect(() => {
     if (ready && isAuthenticated) navigate('/admin/dashboard', { replace: true })
   }, [isAuthenticated, navigate, ready])
 
+  useEffect(() => {
+    if (!cloudEnabled) {
+      setCloudStatus('ok')
+      return
+    }
+    let live = true
+    void pingCloud().then(result => {
+      if (!live) return
+      if (result.ok) {
+        setCloudStatus('ok')
+        setCloudStatusMsg('')
+      } else {
+        setCloudStatus('fail')
+        setCloudStatusMsg(result.error || 'Cannot reach Supabase.')
+      }
+    })
+    return () => { live = false }
+  }, [cloudEnabled])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const result = await login(username.trim(), password)
-    setLoading(false)
-    if (result.ok) {
-      navigate('/admin/dashboard')
-    } else {
-      setError(result.error || 'Invalid credentials. Please try again.')
+    try {
+      const result = await login(username.trim(), password)
+      if (result.ok) {
+        navigate('/admin/dashboard')
+      } else {
+        setError(result.error || 'Invalid credentials. Please try again.')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign in failed. Please try again.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -44,32 +71,25 @@ export default function AdminLogin() {
           <p className="text-slate-200 text-sm">Infrastructure Resilience Watch</p>
         </div>
 
-        <div className="rounded-2xl p-8" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(16px)' }}>
+        <div className="login-panel rounded-2xl p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
                 {cloudEnabled ? 'Email' : 'Username'}
               </label>
               <input
                 type={cloudEnabled ? 'email' : 'text'}
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                placeholder={cloudEnabled ? 'admin@your-org.pk' : 'admin'}
+                placeholder={cloudEnabled ? 'shanu1998email@gmail.com' : 'admin'}
                 required
                 autoComplete={cloudEnabled ? 'email' : 'username'}
-                className="w-full px-4 py-3 rounded-xl text-white text-sm placeholder-slate-500 transition-all"
-                style={{
-                  background: 'rgba(255,255,255,0.07)',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  outline: 'none',
-                }}
-                onFocus={e => { e.target.style.borderColor = '#06B6D4' }}
-                onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.12)' }}
+                className="login-field w-full px-4 py-3 rounded-xl text-sm placeholder-slate-400 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Password</label>
+              <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Password</label>
               <div className="relative">
                 <input
                   type={showPass ? 'text' : 'password'}
@@ -78,14 +98,7 @@ export default function AdminLogin() {
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
-                  className="w-full px-4 py-3 pr-12 rounded-xl text-white text-sm placeholder-slate-500"
-                  style={{
-                    background: 'rgba(255,255,255,0.07)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    outline: 'none',
-                  }}
-                  onFocus={e => { e.target.style.borderColor = '#06B6D4' }}
-                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.12)' }}
+                  className="login-field w-full px-4 py-3 pr-12 rounded-xl text-sm placeholder-slate-400"
                 />
                 <button
                   type="button"
@@ -99,7 +112,7 @@ export default function AdminLogin() {
             </div>
 
             {error && (
-              <div className="px-4 py-3 rounded-xl text-sm text-red-300" style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.3)' }}>
+              <div className="glass-panel-error px-4 py-3 rounded-xl text-sm">
                 {error}
               </div>
             )}
@@ -126,9 +139,19 @@ export default function AdminLogin() {
           </form>
 
           {cloudEnabled ? (
-            <div className="mt-6 p-4 rounded-xl" style={{ background: 'rgba(6,182,212,0.07)', border: '1px solid rgba(6,182,212,0.15)' }}>
-              <div className="text-xs text-slate-300 font-semibold uppercase tracking-wider mb-2">Cloud database connected</div>
-              <p className="text-xs text-slate-400 leading-relaxed">Sign in with the admin email created in Supabase. Published content is visible to everyone on the User Portal.</p>
+            <div className={`mt-6 p-4 rounded-xl text-sm ${cloudStatus === 'fail' ? 'glass-panel-error' : cloudStatus === 'checking' ? 'glass-panel-warning' : 'glass-panel-success'}`}>
+              <div className="text-xs font-semibold uppercase tracking-wider mb-2">
+                {cloudStatus === 'checking' ? 'Checking cloud database…' : cloudStatus === 'fail' ? 'Cloud database unreachable' : 'Cloud database connected'}
+              </div>
+              {cloudStatus === 'fail' ? (
+                <p className="text-xs leading-relaxed">{cloudStatusMsg}</p>
+              ) : cloudStatus === 'checking' ? (
+                <p className="text-xs leading-relaxed">Verifying connection to Supabase…</p>
+              ) : (
+                <p className="text-xs leading-relaxed">
+                  Sign in with the <strong>exact email</strong> from Supabase Authentication → Users (for example <code className="font-mono">shanu1998email@gmail.com</code>). Published content appears on the User Portal for everyone.
+                </p>
+              )}
             </div>
           ) : (
             <div className="mt-6 p-4 rounded-xl" style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)' }}>

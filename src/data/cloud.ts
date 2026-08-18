@@ -4,21 +4,58 @@ import { EMPTY_SETTINGS, migrateAdvisory } from './migrate'
 
 export { isCloudConfigured }
 
-export function cloudErrorMessage(err: unknown) {
-  const msg = err instanceof Error ? err.message : String(err)
+function normalizeCloudMessage(msg: string) {
   if (/Could not find the table|schema cache|PGRST205|relation .+ does not exist/i.test(msg)) {
     return 'Cloud tables are missing. In Supabase open SQL Editor, paste supabase/schema.sql, click Run, then refresh this page.'
   }
   if (/Bucket not found|media/i.test(msg) && /storage|bucket/i.test(msg)) {
     return 'The media storage bucket is missing. In Supabase Storage create a public bucket named media, or re-run supabase/schema.sql.'
   }
-  if (/Invalid API key|JWT/i.test(msg)) {
-    return 'Supabase API key is invalid. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then redeploy.'
+  if (/Invalid API key|JWT|invalid api key/i.test(msg)) {
+    return 'Supabase API key is invalid. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel, then redeploy.'
   }
-  if (/Failed to fetch|NetworkError|Load failed/i.test(msg)) {
-    return 'Could not reach the cloud database. Check your connection and Supabase project status.'
+  if (/Email not confirmed|email_not_confirmed/i.test(msg)) {
+    return 'Email not confirmed. In Supabase turn off Confirm email (Authentication → Providers → Email) or confirm the user in Authentication → Users.'
   }
-  return msg || 'Cloud database request failed.'
+  if (/Invalid login credentials|invalid_credentials/i.test(msg)) {
+    return 'Invalid email or password. Use the exact email from Supabase Authentication → Users (check spelling) and the password you set there.'
+  }
+  if (/Failed to fetch|NetworkError|Load failed|Network request failed/i.test(msg)) {
+    return 'Cannot reach Supabase. Open your Supabase dashboard and restore the project if it is paused. Then confirm VITE_SUPABASE_URL in Vercel matches Project Settings → API → Project URL, and redeploy.'
+  }
+  return msg
+}
+
+export function cloudErrorMessage(err: unknown): string {
+  if (err == null) return 'Cloud database request failed.'
+
+  if (typeof err === 'string') return normalizeCloudMessage(err)
+
+  if (err instanceof Error && err.message) return normalizeCloudMessage(err.message)
+
+  if (typeof err === 'object') {
+    const o = err as Record<string, unknown>
+    const parts = [o.message, o.error_description, o.msg, o.details, o.hint]
+      .filter(v => typeof v === 'string' && v.trim()) as string[]
+    if (parts.length) return normalizeCloudMessage(parts.join(' — '))
+    if (typeof o.code === 'string' && o.code) return normalizeCloudMessage(o.code)
+  }
+
+  const fallback = String(err)
+  if (fallback === '[object Object]') return 'Cloud database request failed. Check Supabase setup and run supabase/schema.sql.'
+  return normalizeCloudMessage(fallback)
+}
+
+export async function pingCloud(): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false, error: 'Cloud database is not configured.' }
+  try {
+    const { error } = await supabase.from('app_settings').select('id').limit(1)
+    if (error) return { ok: false, error: cloudErrorMessage(error) }
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: cloudErrorMessage(err) }
+  }
 }
 
 function dataUrlToBlob(dataUrl: string) {
@@ -178,9 +215,13 @@ export async function bumpCloudView(id: string) {
 export async function cloudLogin(email: string, password: string) {
   const supabase = getSupabase()
   if (!supabase) return { ok: false, error: 'Cloud database is not configured.' }
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) return { ok: false, error: error.message }
-  return { ok: true, error: '' }
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) return { ok: false, error: cloudErrorMessage(error) }
+    return { ok: true, error: '' }
+  } catch (err) {
+    return { ok: false, error: cloudErrorMessage(err) }
+  }
 }
 
 export async function cloudLogout() {
@@ -190,8 +231,17 @@ export async function cloudLogout() {
 export async function cloudSession() {
   const supabase = getSupabase()
   if (!supabase) return false
-  const { data } = await supabase.auth.getSession()
-  return Boolean(data.session)
+  try {
+    const { data, error } = await supabase.auth.getSession()
+    if (error) {
+      console.error(cloudErrorMessage(error))
+      return false
+    }
+    return Boolean(data.session)
+  } catch (err) {
+    console.error(cloudErrorMessage(err))
+    return false
+  }
 }
 
 export function subscribeCloudAdvisories(onChange: () => void) {

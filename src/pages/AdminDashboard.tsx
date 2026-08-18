@@ -73,15 +73,15 @@ export default function AdminDashboard() {
         </div>
 
         {cloudError ? (
-          <div className="mb-6 glass-panel rounded-2xl p-4 text-sm text-red-800">
+          <div className="mb-6 glass-panel-error rounded-2xl p-4 text-sm">
             {cloudError}
           </div>
         ) : cloudEnabled ? (
-          <div className="mb-6 glass-panel rounded-2xl p-4 text-sm text-emerald-800">
+          <div className="mb-6 glass-panel-success rounded-2xl p-4 text-sm">
             Live database connected. Anything you Publish here appears on the User Portal for every visitor.
           </div>
         ) : (
-          <div className="mb-6 glass-panel rounded-2xl p-4 text-sm text-amber-800">
+          <div className="mb-6 glass-panel-warning rounded-2xl p-4 text-sm">
             Cloud database is not connected. Published items are only visible in this browser. Add <code className="font-mono">VITE_SUPABASE_URL</code> and <code className="font-mono">VITE_SUPABASE_ANON_KEY</code> to show them to everyone. See README.
           </div>
         )}

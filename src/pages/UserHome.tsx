@@ -32,9 +32,9 @@ export default function UserHome() {
 
   return (
     <div>
-      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(11,31,58,0.28) 0%, rgba(23,105,170,0.18) 70%)' }}>
-        <div className="absolute inset-0 opacity-[0.08]" style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)',
+      <section className="hero-band relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.12]" style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)',
           backgroundSize: '32px 32px',
         }} />
         <div className="relative max-w-6xl mx-auto px-4 py-12 md:py-16">
@@ -164,10 +164,10 @@ export default function UserHome() {
 
 function EmptyState({ title, body }: { title: string; body: string }) {
   return (
-    <div className="glass-panel rounded-2xl p-12 text-center">
-      <Shield size={36} className="mx-auto mb-3 text-slate-300" />
-      <h3 className="text-lg font-bold text-slate-600 mb-2" style={{ fontFamily: 'DM Serif Display, serif' }}>{title}</h3>
-      <p className="text-slate-400 text-sm max-w-md mx-auto">{body}</p>
+    <div className="glass-panel rounded-2xl p-10 sm:p-12 text-center">
+      <Shield size={36} className="mx-auto mb-3 text-slate-400" />
+      <h3 className="text-lg font-bold text-slate-800 mb-2" style={{ fontFamily: 'DM Serif Display, serif' }}>{title}</h3>
+      <p className="text-slate-600 text-sm max-w-md mx-auto">{body}</p>
     </div>
   )
 }

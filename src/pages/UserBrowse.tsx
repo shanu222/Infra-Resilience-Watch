@@ -75,7 +75,7 @@ export default function UserBrowse({ section }: { section: keyof typeof SECTIONS
         </div>
       ) : (
         <>
-          <div className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-4">
+          <div className="text-xs font-semibold user-ink-muted uppercase tracking-wider mb-4">
             {items.length} item{items.length === 1 ? '' : 's'}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

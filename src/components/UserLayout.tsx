@@ -92,7 +92,7 @@ export default function UserLayout() {
         <main id="main-content" className="flex-1 min-w-0">
           {cloudError && (
             <div className="max-w-7xl mx-auto px-4 pt-4 no-print">
-              <div className="rounded-xl px-4 py-3 text-sm text-red-100" style={{ background: 'rgba(127,29,29,0.72)', border: '1px solid rgba(248,113,113,0.35)' }}>
+              <div className="glass-panel-error rounded-xl px-4 py-3 text-sm">
                 {cloudError}
               </div>
             </div>
