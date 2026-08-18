@@ -1,5 +1,78 @@
 import type { CSSProperties } from 'react'
-import type { BackgroundTemplate, DocumentTheme } from '../types'
+import type { BackgroundTemplate, DocumentTheme, HazardType, Severity } from '../types'
+
+/**
+ * Shared document tokens. The PDF renderer and the browser preview both read these
+ * so a published advisory looks the same on screen and on paper.
+ */
+export const DOC_ACCENT = {
+  navy: '#071A33',
+  blue: '#168DDB',
+  cyan: '#12B8D6',
+  teal: '#10A99A',
+  green: '#20B26B',
+  amber: '#F2A900',
+  orange: '#F47B20',
+  red: '#E5484D',
+  purple: '#7357D9',
+  slate: '#475569',
+  grey: '#64748B',
+}
+
+export const SEVERITY_COLOR: Record<Severity, string> = {
+  Normal: '#1D4ED8',
+  Low: '#16A34A',
+  Moderate: '#D97706',
+  High: '#EA580C',
+  Critical: '#DC2626',
+}
+
+export const HAZARD_COLOR: Record<HazardType, string> = {
+  'Flood': DOC_ACCENT.blue,
+  'Flash Flood': DOC_ACCENT.blue,
+  'Urban Flooding': DOC_ACCENT.cyan,
+  'Earthquake': DOC_ACCENT.orange,
+  'GLOF': DOC_ACCENT.cyan,
+  'Landslide': DOC_ACCENT.amber,
+  'Avalanche': DOC_ACCENT.cyan,
+  'Cyclone': DOC_ACCENT.blue,
+  'Windstorm': DOC_ACCENT.blue,
+  'Heavy Rainfall': DOC_ACCENT.blue,
+  'Urban Fire': DOC_ACCENT.red,
+  'Drought': DOC_ACCENT.amber,
+  'Extreme Heat': DOC_ACCENT.orange,
+  'Multi-Hazard': DOC_ACCENT.navy,
+  'Other': DOC_ACCENT.slate,
+}
+
+export function hazardColor(hazard: HazardType): string {
+  return HAZARD_COLOR[hazard] || DOC_ACCENT.blue
+}
+
+/** Semantic accent per document section, kept identical in the PDF and the preview. */
+export const SECTION_COLOR = {
+  brief: DOC_ACCENT.blue,
+  situation: DOC_ACCENT.cyan,
+  problem: DOC_ACCENT.red,
+  assets: DOC_ACCENT.orange,
+  risk: DOC_ACCENT.amber,
+  observations: DOC_ACCENT.blue,
+  recommendations: DOC_ACCENT.teal,
+  actions: DOC_ACCENT.orange,
+  publicConduct: DOC_ACCENT.green,
+  visuals: DOC_ACCENT.navy,
+  video: DOC_ACCENT.purple,
+  guidance: DOC_ACCENT.cyan,
+  contact: DOC_ACCENT.slate,
+  references: DOC_ACCENT.grey,
+}
+
+export const ACTION_PHASE_COLOR = {
+  immediate: DOC_ACCENT.red,
+  shortTerm: DOC_ACCENT.amber,
+  mediumTerm: DOC_ACCENT.blue,
+  longTerm: DOC_ACCENT.green,
+}
 
 export const DOCUMENT_THEMES: { id: DocumentTheme; label: string; header: string; accent: string; band: string; ink: string }[] = [
   { id: 'blue-engineering', label: 'Blue Engineering', header: '#071A33', accent: '#168DDB', band: '#12B8D6', ink: '#071A33' },

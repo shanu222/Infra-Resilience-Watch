@@ -5,6 +5,7 @@ import { useApp } from '../contexts/AppContext'
 import AdminLayout from '../components/AdminLayout'
 import AdvisoryDocument from '../components/AdvisoryDocument'
 import DocumentActions from '../components/DocumentActions'
+import PdfDocumentPreview from '../components/PdfDocumentPreview'
 import { PROVINCE_NAMES, getDistricts } from '../data/pakistan'
 import { HAZARD_TEMPLATES } from '../data/templates'
 import { HAZARDS, ADVISORY_TYPES, SEVERITIES, INFRA_TYPES, ISSUE_TYPES, CONTENT_KINDS, KIND_LABEL } from '../data/constants'
@@ -123,7 +124,7 @@ export default function AdminEditor() {
     return base
   })
   const [tab, setTab] = useState('basic')
-  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile' | 'print'>('desktop')
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile' | 'pdf'>('desktop')
   const [saved, setSaved] = useState(false)
   const [showLibrary, setShowLibrary] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -851,7 +852,7 @@ export default function AdminEditor() {
             <div>
               <div className="mb-4 flex flex-wrap items-center gap-3">
                 <span className="text-sm text-slate-500">Live document preview</span>
-                {(['desktop', 'mobile', 'print'] as const).map(mode => (
+                {(['desktop', 'mobile', 'pdf'] as const).map(mode => (
                   <button
                     key={mode}
                     type="button"
@@ -872,11 +873,15 @@ export default function AdminEditor() {
               <div className="mb-4">
                 <DocumentActions advisory={previewAdvisory} />
               </div>
-              <div className="advisory-preview-frame rounded-2xl border border-slate-200 shadow-lg mx-auto">
-                <div className={`advisory-preview-inner ${previewMode === 'mobile' ? 'max-w-sm mx-auto' : ''}`}>
-                  <AdvisoryDocument advisory={previewAdvisory} />
+              {previewMode === 'pdf' ? (
+                <PdfDocumentPreview advisory={previewAdvisory} />
+              ) : (
+                <div className="advisory-preview-frame rounded-2xl border border-slate-200 shadow-lg mx-auto">
+                  <div className={`advisory-preview-inner ${previewMode === 'mobile' ? 'max-w-sm mx-auto' : ''}`}>
+                    <AdvisoryDocument advisory={previewAdvisory} />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>

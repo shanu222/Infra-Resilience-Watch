@@ -1,7 +1,14 @@
 import { jsPDF } from 'jspdf'
-import type { Advisory, AppSettings, Severity } from '../types'
+import type { Advisory, AppSettings } from '../types'
 import { BRAND, normalizeSeverity } from '../data/constants'
-import { themeOf } from '../data/documentDesign'
+import {
+  ACTION_PHASE_COLOR,
+  DOC_ACCENT as ACCENT,
+  SECTION_COLOR,
+  SEVERITY_COLOR,
+  hazardColor,
+  themeOf,
+} from '../data/documentDesign'
 import { formatDateLong, locationLabel, sanitizeDocText } from '../utils'
 import { fitContain, loadImageForPdf, type LoadedImage } from './pdfImages'
 import {
@@ -21,29 +28,38 @@ import {
   trackedTextWidth,
   type RGB,
 } from './pdfPrimitives'
+import {
+  HAIRLINE,
+  INK,
+  MUTED,
+  TYPE,
+  assetCardBlocks,
+  bannerBlocks,
+  briefBlocks,
+  calloutBlocks,
+  contactBlocks,
+  dualListBlocks,
+  imageBlocks,
+  imageGridBlocks,
+  numberedCardBlocks,
+  observationBlocks,
+  paragraphBlocks,
+  referenceBlocks,
+  tagBlocks,
+  timelineBlocks,
+  videoBlocks,
+  wrapText,
+  type Block,
+} from './pdfBlocks'
 
-const RUNNING_HEADER_HEIGHT = 14
-const FOOTER_HEIGHT = 12
-const WING_NAME = 'Infrastructure Advisory & Project Development Wing'
+const RUNNING_HEADER_HEIGHT = 12
+const FOOTER_ZONE = 11
+const SECTION_GAP = 4.6
+const COLUMN_GAP = 6
+/** A section pair is only worth forming when both columns stay this short. */
+const PAIR_MAX_HEIGHT = 56
 
-const SEVERITY_COLOR: Record<Severity, string> = {
-  Normal: '#1D4ED8',
-  Low: '#16A34A',
-  Moderate: '#D97706',
-  High: '#EA580C',
-  Critical: '#DC2626',
-}
-
-const ACCENT = {
-  blue: '#168DDB',
-  cyan: '#12B8D6',
-  green: '#20B26B',
-  amber: '#F2A900',
-  orange: '#F47B20',
-  red: '#E5484D',
-  purple: '#7357D9',
-  slate: '#475569',
-}
+const WING_NAME = BRAND.wing
 
 interface Palette {
   header: RGB
@@ -53,516 +69,100 @@ interface Palette {
   severity: RGB
 }
 
-interface Doc {
-  pdf: jsPDF
-  y: number
-  palette: Palette
-  sectionNumber: number
-  advisoryNumber: string
+interface SectionSpec {
+  title: string
+  color: string
+  build: (width: number) => Block[]
+  /** Wide content (images, timelines, two-column cards) never shares a row. */
+  solo?: boolean
+  /** Banners render without a numbered section header. */
+  bare?: boolean
 }
 
 /* ------------------------------------------------------------------ *
- * Page flow
+ * Section header
  * ------------------------------------------------------------------ */
 
-function contentBottom(): number {
-  return PAGE.height - MARGIN.bottom - FOOTER_HEIGHT
-}
-
-function newPage(doc: Doc) {
-  doc.pdf.addPage('a4', 'portrait')
-  drawRunningHeader(doc)
-  doc.y = MARGIN.top + RUNNING_HEADER_HEIGHT
-}
-
-/** Reserve vertical space; starts a new page when the block will not fit. */
-function ensureSpace(doc: Doc, needed: number) {
-  if (doc.y + needed > contentBottom()) newPage(doc)
-}
-
-function drawRunningHeader(doc: Doc) {
-  const { pdf, palette } = doc
-  const y = MARGIN.top
-
-  setFill(pdf, palette.header)
-  pdf.rect(MARGIN.left, y - 6, CONTENT_WIDTH, 0.9, 'F')
-
-  pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(7.5)
-  setText(pdf, palette.header)
-  drawTrackedText(pdf, BRAND.name, MARGIN.left, y, 0.5)
-
-  pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(7.5)
-  setText(pdf, hexToRgb(ACCENT.slate))
-  const ref = `Advisory No: ${doc.advisoryNumber}`
-  pdf.text(ref, PAGE.width - MARGIN.right - pdf.getTextWidth(ref), y)
-
-  setFill(pdf, palette.band)
-  pdf.rect(MARGIN.left, y + 2, CONTENT_WIDTH, 0.7, 'F')
-}
-
-function drawFooters(doc: Doc) {
-  const { pdf, palette } = doc
-  const total = pdf.getNumberOfPages()
-
-  for (let page = 1; page <= total; page += 1) {
-    pdf.setPage(page)
-    const y = PAGE.height - MARGIN.bottom
-
-    setStroke(pdf, tintRgb(palette.header, 0.72))
-    pdf.setLineWidth(0.3)
-    pdf.line(MARGIN.left, y - 5, PAGE.width - MARGIN.right, y - 5)
-
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(7)
-    setText(pdf, palette.header)
-    pdf.text(BRAND.shortName, MARGIN.left, y - 1)
-
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(6.5)
-    setText(pdf, hexToRgb(ACCENT.slate))
-    pdf.text(WING_NAME, MARGIN.left, y + 2.6)
-
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(7)
-    setText(pdf, palette.accent)
-    const label = `Page ${page} of ${total}`
-    pdf.text(label, PAGE.width - MARGIN.right - pdf.getTextWidth(label), y - 1)
-  }
-
-  pdf.setPage(total)
-}
-
-/* ------------------------------------------------------------------ *
- * Text blocks
- * ------------------------------------------------------------------ */
-
-function paragraph(
-  doc: Doc,
-  value: string,
-  options: { size?: number; color?: RGB; bold?: boolean; indent?: number; gap?: number } = {},
-) {
-  const text = cleanText(value)
-  if (!text) return
-
-  const { pdf } = doc
-  const size = options.size ?? 9.5
-  const indent = options.indent ?? 0
-  const width = CONTENT_WIDTH - indent
-  const lh = lineHeight(size)
-
-  pdf.setFont('helvetica', options.bold ? 'bold' : 'normal')
-  pdf.setFontSize(size)
-  setText(pdf, options.color ?? hexToRgb('#1F2937'))
-
-  for (const block of text.split('\n')) {
-    if (!block.trim()) {
-      doc.y += lh * 0.5
-      continue
-    }
-    const lines = pdf.splitTextToSize(block, width) as string[]
-    for (const line of lines) {
-      ensureSpace(doc, lh)
-      pdf.setFont('helvetica', options.bold ? 'bold' : 'normal')
-      pdf.setFontSize(size)
-      setText(pdf, options.color ?? hexToRgb('#1F2937'))
-      pdf.text(line, MARGIN.left + indent, doc.y + lh * 0.72)
-      doc.y += lh
-    }
-  }
-
-  doc.y += options.gap ?? 1.2
-}
-
-/** Section heading kept together with the first lines of its content. */
-function sectionHeading(doc: Doc, title: string, colorHex: string) {
-  const { pdf } = doc
-  const color = hexToRgb(colorHex)
-  const number = String(doc.sectionNumber).padStart(2, '0')
-  doc.sectionNumber += 1
-
-  const boxHeight = 8
-  ensureSpace(doc, boxHeight + lineHeight(9.5) * 2 + 3)
-
-  setFill(pdf, color)
-  pdf.roundedRect(MARGIN.left, doc.y, 9, boxHeight, 1.4, 1.4, 'F')
-
-  pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(7.5)
-  setText(pdf, [255, 255, 255])
-  pdf.text(number, MARGIN.left + 4.5 - pdf.getTextWidth(number) / 2, doc.y + 5.4)
-
-  pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(9)
-  setText(pdf, color)
-  drawTrackedText(pdf, title.toUpperCase(), MARGIN.left + 12.5, doc.y + 5.4, 0.55)
-
-  setStroke(pdf, color)
-  pdf.setLineWidth(0.5)
-  pdf.line(MARGIN.left, doc.y + boxHeight + 1.6, PAGE.width - MARGIN.right, doc.y + boxHeight + 1.6)
-
-  doc.y += boxHeight + 4.4
-}
-
-function calloutBlock(doc: Doc, value: string, colorHex: string) {
-  const text = cleanText(value)
-  if (!text) return
-
-  const { pdf } = doc
-  const color = hexToRgb(colorHex)
-  const size = 9.5
-  const lh = lineHeight(size)
-  const padding = 3.2
-  const innerWidth = CONTENT_WIDTH - padding * 2 - 2
-
-  pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(size)
-
-  const paragraphs = text.split('\n').filter(Boolean)
-  for (const block of paragraphs) {
-    const lines = pdf.splitTextToSize(block, innerWidth) as string[]
-    let index = 0
-
-    while (index < lines.length) {
-      const available = contentBottom() - doc.y - padding * 2
-      if (available < lh * 1.5) {
-        newPage(doc)
-        continue
-      }
-      const fit = Math.max(1, Math.floor(available / lh))
-      const slice = lines.slice(index, index + fit)
-      const boxHeight = slice.length * lh + padding * 2
-
-      setFill(pdf, tintRgb(color, 0.9))
-      pdf.roundedRect(MARGIN.left, doc.y, CONTENT_WIDTH, boxHeight, 2, 2, 'F')
-      setFill(pdf, color)
-      pdf.rect(MARGIN.left, doc.y, 1.6, boxHeight, 'F')
-
-      pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(size)
-      setText(pdf, hexToRgb('#1F2937'))
-      slice.forEach((line, i) => {
-        pdf.text(line, MARGIN.left + padding + 2, doc.y + padding + lh * (i + 0.72))
-      })
-
-      doc.y += boxHeight + 2
-      index += fit
-    }
-  }
-
-  doc.y += 0.8
-}
-
-function bulletList(
-  doc: Doc,
-  items: string[],
-  colorHex: string,
-  options: { numbered?: boolean } = {},
-) {
-  const entries = items.map(cleanText).filter(Boolean)
-  if (!entries.length) return
-
-  const { pdf } = doc
-  const color = hexToRgb(colorHex)
-  const size = 9.5
-  const lh = lineHeight(size)
-  const markerWidth = options.numbered ? 7 : 5
-  const textIndent = markerWidth + 1.5
-
-  entries.forEach((entry, index) => {
-    const lines = pdf.splitTextToSize(entry, CONTENT_WIDTH - textIndent) as string[]
-    // Keep the marker with at least its first line.
-    ensureSpace(doc, lh * Math.min(lines.length, 2))
-
-    const markerY = doc.y + lh * 0.72
-    if (options.numbered) {
-      setFill(pdf, color)
-      pdf.circle(MARGIN.left + 2.4, markerY - 1.1, 2.3, 'F')
-      pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(6.5)
-      setText(pdf, [255, 255, 255])
-      const label = String(index + 1)
-      pdf.text(label, MARGIN.left + 2.4 - pdf.getTextWidth(label) / 2, markerY + 0.5)
+function wrapTracked(pdf: jsPDF, text: string, width: number, tracking: number): string[] {
+  const words = text.split(' ').filter(Boolean)
+  const lines: string[] = []
+  let current = ''
+  for (const word of words) {
+    const candidate = current ? `${current} ${word}` : word
+    if (current && trackedTextWidth(pdf, candidate, tracking) > width) {
+      lines.push(current)
+      current = word
     } else {
-      setFill(pdf, color)
-      pdf.circle(MARGIN.left + 1.8, markerY - 1.1, 1.1, 'F')
+      current = candidate
     }
-
-    lines.forEach((line, i) => {
-      if (i > 0) ensureSpace(doc, lh)
-      pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(size)
-      setText(pdf, hexToRgb('#1F2937'))
-      pdf.text(line, MARGIN.left + textIndent, doc.y + lh * 0.72)
-      doc.y += lh
-    })
-    doc.y += 1
-  })
-
-  doc.y += 1
+  }
+  if (current) lines.push(current)
+  return lines
 }
 
-function chipRow(doc: Doc, items: string[], colorHex: string) {
-  const entries = items.map(cleanText).filter(Boolean)
-  if (!entries.length) return
-
-  const { pdf } = doc
+function sectionHeaderBlock(
+  pdf: jsPDF,
+  number: number,
+  title: string,
+  colorHex: string,
+  width: number,
+): Block {
   const color = hexToRgb(colorHex)
-  const height = 6.4
-  const gap = 2.2
-  let x = MARGIN.left
+  const compact = width < 120
+  const size = compact ? TYPE.sectionTitle - 1.6 : TYPE.sectionTitle
+  const chip = 6.6
+  const textX = chip + 4
 
   pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(7.5)
+  pdf.setFontSize(size)
+  const lines = wrapTracked(pdf, title.toUpperCase(), width - textX - 1, 0.55)
+  const titleBlock = lines.length * lineHeight(size, 1.24)
+  const height = Math.max(chip, titleBlock) + 4.4
 
-  ensureSpace(doc, height)
-
-  for (const entry of entries) {
-    const label = entry.toUpperCase()
-    const width = trackedTextWidth(pdf, label, 0.4) + 6
-    if (x + width > PAGE.width - MARGIN.right) {
-      x = MARGIN.left
-      doc.y += height + gap
-      ensureSpace(doc, height)
-    }
-
-    setFill(pdf, tintRgb(color, 0.86))
-    pdf.roundedRect(x, doc.y, width, height, 1.6, 1.6, 'F')
-    setStroke(pdf, tintRgb(color, 0.55))
-    pdf.setLineWidth(0.25)
-    pdf.roundedRect(x, doc.y, width, height, 1.6, 1.6, 'S')
-
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(7.5)
-    setText(pdf, color)
-    drawTrackedText(pdf, label, x + 3, doc.y + 4.3, 0.4)
-
-    x += width + gap
-  }
-
-  doc.y += height + 3
-}
-
-function factGrid(doc: Doc, facts: { label: string; value: string }[], colorHex: string) {
-  const entries = facts
-    .map(f => ({ label: cleanText(f.label), value: cleanText(f.value) }))
-    .filter(f => f.value)
-  if (!entries.length) return
-
-  const { pdf } = doc
-  const color = hexToRgb(colorHex)
-  const columnGap = 4
-  const columnWidth = (CONTENT_WIDTH - columnGap) / 2
-  const size = 8.5
-  const lh = lineHeight(size)
-
-  for (let i = 0; i < entries.length; i += 2) {
-    const pair = entries.slice(i, i + 2)
-    const heights = pair.map(entry => {
-      pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(size)
-      const lines = pdf.splitTextToSize(entry.value, columnWidth - 6) as string[]
-      return lines.length * lh + 8.5
-    })
-    const rowHeight = Math.max(...heights)
-    ensureSpace(doc, rowHeight + 2)
-
-    pair.forEach((entry, col) => {
-      const x = MARGIN.left + col * (columnWidth + columnGap)
-
-      setFill(pdf, tintRgb(color, 0.92))
-      pdf.roundedRect(x, doc.y, columnWidth, rowHeight, 1.8, 1.8, 'F')
-      setStroke(pdf, tintRgb(color, 0.6))
-      pdf.setLineWidth(0.25)
-      pdf.roundedRect(x, doc.y, columnWidth, rowHeight, 1.8, 1.8, 'S')
+  return {
+    height,
+    draw: (x, y) => {
+      setFill(pdf, color)
+      pdf.roundedRect(x, y, chip, chip, 1.3, 1.3, 'F')
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(TYPE.label)
+      setText(pdf, [255, 255, 255])
+      const label = String(number).padStart(2, '0')
+      pdf.text(label, x + chip / 2 - pdf.getTextWidth(label) / 2, y + 4.5)
 
       pdf.setFont('helvetica', 'bold')
-      pdf.setFontSize(6.5)
+      pdf.setFontSize(size)
       setText(pdf, color)
-      drawTrackedText(pdf, entry.label.toUpperCase(), x + 3, doc.y + 4.2, 0.45)
-
-      pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(size)
-      setText(pdf, hexToRgb('#1F2937'))
-      const lines = pdf.splitTextToSize(entry.value, columnWidth - 6) as string[]
-      lines.forEach((line, li) => {
-        pdf.text(line, x + 3, doc.y + 7.4 + lh * (li + 0.72))
-      })
-    })
-
-    doc.y += rowHeight + 2.5
-  }
-
-  doc.y += 0.8
-}
-
-function twoColumnLists(
-  doc: Doc,
-  left: { title: string; items: string[]; color: string },
-  right: { title: string; items: string[]; color: string },
-) {
-  const leftItems = left.items.map(cleanText).filter(Boolean)
-  const rightItems = right.items.map(cleanText).filter(Boolean)
-  if (!leftItems.length && !rightItems.length) return
-
-  const { pdf } = doc
-  const columnGap = 4
-  const columnWidth = (CONTENT_WIDTH - columnGap) / 2
-  const size = 9
-  const lh = lineHeight(size)
-
-  const measure = (items: string[]) => {
-    pdf.setFont('helvetica', 'normal')
-    pdf.setFontSize(size)
-    return items.reduce((total, item) => {
-      const lines = pdf.splitTextToSize(item, columnWidth - 9) as string[]
-      return total + lines.length * lh + 1.2
-    }, 0)
-  }
-
-  const bodyHeight = Math.max(measure(leftItems), measure(rightItems))
-  const blockHeight = bodyHeight + 12
-
-  // Long lists fall back to stacked sections so nothing is clipped.
-  if (blockHeight > contentBottom() - MARGIN.top - RUNNING_HEADER_HEIGHT) {
-    if (leftItems.length) {
-      paragraph(doc, left.title, { bold: true, size: 9, color: hexToRgb(left.color) })
-      bulletList(doc, leftItems, left.color)
-    }
-    if (rightItems.length) {
-      paragraph(doc, right.title, { bold: true, size: 9, color: hexToRgb(right.color) })
-      bulletList(doc, rightItems, right.color)
-    }
-    return
-  }
-
-  ensureSpace(doc, blockHeight)
-  const top = doc.y
-
-  const drawColumn = (
-    x: number,
-    config: { title: string; items: string[]; color: string },
-    items: string[],
-  ) => {
-    if (!items.length) return
-    const color = hexToRgb(config.color)
-
-    setFill(pdf, tintRgb(color, 0.9))
-    pdf.roundedRect(x, top, columnWidth, blockHeight, 2, 2, 'F')
-    setStroke(pdf, tintRgb(color, 0.58))
-    pdf.setLineWidth(0.25)
-    pdf.roundedRect(x, top, columnWidth, blockHeight, 2, 2, 'S')
-
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(8.5)
-    setText(pdf, color)
-    drawTrackedText(pdf, config.title.toUpperCase(), x + 4, top + 6, 0.5)
-
-    let cursor = top + 10
-    items.forEach(item => {
-      pdf.setFont('helvetica', 'normal')
-      pdf.setFontSize(size)
-      setText(pdf, hexToRgb('#1F2937'))
-      const lines = pdf.splitTextToSize(item, columnWidth - 9) as string[]
-      setFill(pdf, color)
-      pdf.circle(x + 4.6, cursor + lh * 0.72 - 1.1, 1, 'F')
       lines.forEach((line, i) => {
-        pdf.text(line, x + 7.5, cursor + lh * (i + 0.72))
+        drawTrackedText(pdf, line, x + textX, y + 4.4 + i * lineHeight(size, 1.24), 0.55)
       })
-      cursor += lines.length * lh + 1.2
-    })
+
+      const ruleY = y + height - 2.2
+      setStroke(pdf, color)
+      pdf.setLineWidth(0.5)
+      pdf.line(x, ruleY, x + Math.min(width, 26), ruleY)
+      setStroke(pdf, HAIRLINE)
+      pdf.setLineWidth(0.3)
+      pdf.line(x + Math.min(width, 26), ruleY, x + width, ruleY)
+    },
   }
-
-  drawColumn(MARGIN.left, left, leftItems)
-  drawColumn(MARGIN.left + columnWidth + columnGap, right, rightItems)
-
-  doc.y = top + blockHeight + 3
 }
 
-function highlightBox(doc: Doc, label: string, value: string, accentHex: string) {
-  const text = cleanText(value)
-  if (!text) return
-
-  const { pdf, palette } = doc
-  const size = 9.5
-  const lh = lineHeight(size)
-  const padding = 4
-
-  pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(size)
-  const lines = pdf.splitTextToSize(text, CONTENT_WIDTH - padding * 2) as string[]
-  const boxHeight = lines.length * lh + padding * 2 + 5
-
-  // Taller than a full page: fall back to the paginating callout.
-  if (boxHeight > contentBottom() - MARGIN.top - RUNNING_HEADER_HEIGHT) {
-    sectionHeading(doc, label, accentHex)
-    calloutBlock(doc, text, accentHex)
-    return
+function continuationBlock(pdf: jsPDF, title: string, colorHex: string): Block {
+  const color = hexToRgb(colorHex)
+  return {
+    height: 5.6,
+    draw: (x, y) => {
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(TYPE.label)
+      setText(pdf, tintRgb(color, 0.25))
+      drawTrackedText(pdf, `${title.toUpperCase()} (CONTINUED)`, x, y + 3.2, 0.5)
+    },
   }
-
-  ensureSpace(doc, boxHeight)
-
-  gradientRect(pdf, MARGIN.left, doc.y, CONTENT_WIDTH, boxHeight, palette.header, palette.accent)
-  setFill(pdf, palette.band)
-  pdf.rect(MARGIN.left, doc.y, CONTENT_WIDTH, 1.2, 'F')
-
-  pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(7)
-  setText(pdf, palette.band)
-  drawTrackedText(pdf, label.toUpperCase(), MARGIN.left + padding, doc.y + padding + 3, 0.7)
-
-  pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(size)
-  setText(pdf, [255, 255, 255])
-  lines.forEach((line, i) => {
-    pdf.text(line, MARGIN.left + padding, doc.y + padding + 6.5 + lh * (i + 0.72))
-  })
-
-  doc.y += boxHeight + 3
-}
-
-function imageBlock(
-  doc: Doc,
-  image: LoadedImage,
-  caption: string,
-  figureLabel: string,
-  maxHeight = 92,
-) {
-  const { pdf } = doc
-  const size = 8
-  const lh = lineHeight(size)
-  const fitted = fitContain(image, CONTENT_WIDTH, maxHeight)
-
-  pdf.setFont('helvetica', 'italic')
-  pdf.setFontSize(size)
-  const captionText = cleanText(caption)
-  const captionLines = captionText
-    ? (pdf.splitTextToSize(`${figureLabel} · ${captionText}`, CONTENT_WIDTH - 4) as string[])
-    : [figureLabel]
-  const captionHeight = captionLines.length * lh + 2.5
-
-  // Image + caption stay on the same page.
-  ensureSpace(doc, fitted.height + captionHeight + 3)
-
-  const x = MARGIN.left + (CONTENT_WIDTH - fitted.width) / 2
-  pdf.addImage(image.dataUrl, image.format, x, doc.y, fitted.width, fitted.height, undefined, 'FAST')
-  setStroke(pdf, hexToRgb('#CBD5E1'))
-  pdf.setLineWidth(0.25)
-  pdf.rect(x, doc.y, fitted.width, fitted.height, 'S')
-  doc.y += fitted.height + 2
-
-  pdf.setFont('helvetica', 'italic')
-  pdf.setFontSize(size)
-  setText(pdf, hexToRgb('#64748B'))
-  captionLines.forEach((line, i) => {
-    pdf.text(line, MARGIN.left, doc.y + lh * (i + 0.72))
-  })
-  doc.y += captionLines.length * lh + 3
 }
 
 /* ------------------------------------------------------------------ *
- * Cover header
+ * Cover
  * ------------------------------------------------------------------ */
 
 interface CoverAssets {
@@ -571,139 +171,470 @@ interface CoverAssets {
   advisoryLogo: LoadedImage | null
 }
 
-function drawCoverHeader(doc: Doc, advisory: Advisory, assets: CoverAssets) {
-  const { pdf, palette } = doc
+function coverBlocks(
+  pdf: jsPDF,
+  advisory: Advisory,
+  palette: Palette,
+  advisoryNumber: string,
+  assets: CoverAssets,
+  width: number,
+): Block[] {
   const severity = normalizeSeverity(advisory.severity)
   const logos = [assets.orgLogo, assets.wingLogo, assets.advisoryLogo].filter(Boolean) as LoadedImage[]
+  const padX = 7
 
   pdf.setFont('times', 'bold')
-  pdf.setFontSize(19)
+  pdf.setFontSize(TYPE.title)
   const titleText = cleanText(advisory.title) || 'Untitled advisory'
-  const titleLines = pdf.splitTextToSize(titleText, CONTENT_WIDTH - 8) as string[]
-  const titleHeight = titleLines.length * lineHeight(19, 1.18)
+  const titleLines = pdf.splitTextToSize(titleText, width - padX * 2 - 2) as string[]
+  const titleLh = lineHeight(TYPE.title, 1.16)
 
-  const logoHeight = logos.length ? 18 : 0
-  const headerHeight = 16 + logoHeight + 10 + titleHeight + 20
+  const logoPlates = logos.map(logo => ({ logo, size: fitContain(logo, 30, 13) }))
+  const logoRow = logoPlates.length ? 17 : 0
 
-  const x = MARGIN.left
-  const y = MARGIN.top
-  const width = CONTENT_WIDTH
+  let cursor = 8
+  const eyebrowY = cursor
+  cursor += 5.4
+  const typeY = cursor
+  cursor += 6.2
+  const logoY = cursor
+  cursor += logoRow
+  const ruleY = cursor
+  cursor += 4.6
+  const badgeY = cursor
+  cursor += 10.6
+  const titleY = cursor
+  cursor += titleLines.length * titleLh
+  const bandHeight = cursor + 7
 
-  gradientRect(pdf, x, y, width, headerHeight, palette.header, palette.accent)
-  setFill(pdf, palette.band)
-  pdf.rect(x, y, width, 1.6, 'F')
+  const band: Block = {
+    height: bandHeight,
+    draw: (x, y) => {
+      gradientRect(pdf, x, y, width, bandHeight, palette.header, palette.accent)
+      setFill(pdf, palette.band)
+      pdf.rect(x, y, width, 1.7, 'F')
 
-  let cursor = y + 7
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(TYPE.label + 0.4)
+      setText(pdf, palette.band)
+      drawTrackedText(pdf, BRAND.name, x + padX, y + eyebrowY, 0.9)
 
-  // Brand + reference row
-  pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(7.5)
-  setText(pdf, palette.band)
-  drawTrackedText(pdf, BRAND.name, x + 5, cursor + 2, 0.7)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(11.5)
+      setText(pdf, [255, 255, 255])
+      pdf.text(cleanText(advisory.type) || 'Infrastructure Advisory', x + padX, y + typeY + 2.4)
 
-  pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(7)
-  setText(pdf, [226, 240, 252])
-  const refLines = [`Advisory No: ${doc.advisoryNumber}`, `Version: ${advisory.version}.0`]
-  refLines.forEach((line, i) => {
-    pdf.text(line, PAGE.width - MARGIN.right - 5 - pdf.getTextWidth(line), cursor + 2 + i * 3.6)
-  })
+      // Reference block, right aligned
+      const refs = [
+        { label: 'Advisory No', value: advisoryNumber },
+        { label: 'Version', value: `${advisory.version}.0` },
+      ]
+      refs.forEach((ref, i) => {
+        const ry = y + eyebrowY + i * 6.4
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(TYPE.label - 0.4)
+        setText(pdf, tintRgb(palette.band, 0.25))
+        const labelText = ref.label.toUpperCase()
+        const labelWidth = trackedTextWidth(pdf, labelText, 0.5)
+        drawTrackedText(pdf, labelText, x + width - padX - labelWidth, ry, 0.5)
 
-  pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(10)
-  setText(pdf, [255, 255, 255])
-  pdf.text(cleanText(advisory.type) || 'Infrastructure Advisory', x + 5, cursor + 8)
-  cursor += 12
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(TYPE.small)
+        setText(pdf, [255, 255, 255])
+        pdf.text(ref.value, x + width - padX - pdf.getTextWidth(ref.value), ry + 3.6)
+      })
 
-  // Logos on a white plate so transparent PNGs never show artifacts.
-  if (logos.length) {
-    let logoX = x + 5
-    for (const logo of logos) {
-      const fitted = fitContain(logo, 34, 16)
-      setFill(pdf, [255, 255, 255])
-      pdf.roundedRect(logoX, cursor, fitted.width + 3, fitted.height + 3, 1.5, 1.5, 'F')
-      pdf.addImage(
-        logo.dataUrl,
-        logo.format,
-        logoX + 1.5,
-        cursor + 1.5,
-        fitted.width,
-        fitted.height,
-        undefined,
-        'FAST',
-      )
-      logoX += fitted.width + 7
-    }
-    cursor += logoHeight
+      logoPlates.forEach((plate, i) => {
+        const px = x + padX + i * 34
+        setFill(pdf, [255, 255, 255])
+        pdf.roundedRect(px, y + logoY, plate.size.width + 3, plate.size.height + 3, 1.4, 1.4, 'F')
+        pdf.addImage(
+          plate.logo.dataUrl,
+          plate.logo.format,
+          px + 1.5,
+          y + logoY + 1.5,
+          plate.size.width,
+          plate.size.height,
+          undefined,
+          'FAST',
+        )
+      })
+
+      setFill(pdf, palette.band)
+      pdf.rect(x + padX, y + ruleY, width - padX * 2, 0.8, 'F')
+
+      // Hazard + severity badges
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(TYPE.label + 0.6)
+      const hazardLabel = cleanText(advisory.hazard).toUpperCase()
+      const hazardWidth = trackedTextWidth(pdf, hazardLabel, 0.8) + 9
+      setFill(pdf, hexToRgb(hazardColor(advisory.hazard)))
+      pdf.roundedRect(x + padX, y + badgeY, hazardWidth, 7, 1.6, 1.6, 'F')
+      setText(pdf, [255, 255, 255])
+      drawTrackedText(pdf, hazardLabel, x + padX + 4.5, y + badgeY + 4.7, 0.8)
+
+      const sevLabel = `${severity.toUpperCase()} SEVERITY`
+      const sevWidth = trackedTextWidth(pdf, sevLabel, 0.8) + 9
+      const sevX = x + padX + hazardWidth + 3.4
+      setFill(pdf, palette.severity)
+      pdf.roundedRect(sevX, y + badgeY, sevWidth, 7, 1.6, 1.6, 'F')
+      setText(pdf, [255, 255, 255])
+      drawTrackedText(pdf, sevLabel, sevX + 4.5, y + badgeY + 4.7, 0.8)
+
+      pdf.setFont('times', 'bold')
+      pdf.setFontSize(TYPE.title)
+      setText(pdf, [255, 255, 255])
+      titleLines.forEach((line, i) => {
+        pdf.text(line, x + padX, y + titleY + titleLh * (i + 0.8))
+      })
+    },
   }
 
-  // Hazard + severity chips
-  pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(7.5)
-  const hazardLabel = cleanText(advisory.hazard).toUpperCase()
-  const hazardWidth = trackedTextWidth(pdf, hazardLabel, 0.6) + 7
-  setFill(pdf, palette.band)
-  pdf.roundedRect(x + 5, cursor, hazardWidth, 6.4, 1.6, 1.6, 'F')
-  setText(pdf, palette.header)
-  drawTrackedText(pdf, hazardLabel, x + 8.5, cursor + 4.3, 0.6)
-
-  const sevLabel = `${severity.toUpperCase()} SEVERITY`
-  const sevWidth = trackedTextWidth(pdf, sevLabel, 0.6) + 7
-  setFill(pdf, palette.severity)
-  pdf.roundedRect(x + 5 + hazardWidth + 3, cursor, sevWidth, 6.4, 1.6, 1.6, 'F')
-  setText(pdf, [255, 255, 255])
-  drawTrackedText(pdf, sevLabel, x + 8.5 + hazardWidth + 3, cursor + 4.3, 0.6)
-  cursor += 10.5
-
-  // Title
-  pdf.setFont('times', 'bold')
-  pdf.setFontSize(19)
-  setText(pdf, [255, 255, 255])
-  titleLines.forEach((line, i) => {
-    pdf.text(line, x + 5, cursor + lineHeight(19, 1.18) * (i + 0.78))
-  })
-  cursor += titleHeight + 4
-
-  // Meta row
+  // Metadata strip on a light surface: readable and print-safe
   const meta = [
-    { label: 'Date', value: formatDateLong(advisory.publishedAt || advisory.createdAt) || '-' },
+    { label: 'Date', value: formatDateLong(advisory.publishedAt || advisory.createdAt) },
     { label: 'Location', value: cleanText(advisory.specificLocation) || locationLabel(advisory) },
-    { label: 'District', value: cleanText(advisory.district) || '-' },
-    { label: 'Province', value: cleanText(advisory.province) || 'Pakistan' },
-  ]
-  const columnWidth = (width - 10) / meta.length
+    { label: 'District', value: cleanText(advisory.district) },
+    { label: 'Province', value: cleanText(advisory.province) },
+  ].filter(item => item.value)
 
-  meta.forEach((item, i) => {
-    const mx = x + 5 + i * columnWidth
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(6)
-    setText(pdf, [156, 195, 228])
-    drawTrackedText(pdf, item.label.toUpperCase(), mx, cursor + 2, 0.5)
+  const blocks: Block[] = [band]
 
-    pdf.setFont('helvetica', 'bold')
-    pdf.setFontSize(8)
-    setText(pdf, [255, 255, 255])
-    const lines = pdf.splitTextToSize(item.value, columnWidth - 3) as string[]
-    pdf.text(lines.slice(0, 2), mx, cursor + 6)
-  })
+  if (meta.length) {
+    const cellWidth = (width - 8) / meta.length
+    const valueLines = meta.map(item => wrapText(pdf, item.value, cellWidth - 4, TYPE.small, 'bold'))
+    const rows = Math.max(...valueLines.map(l => Math.min(l.length, 2)))
+    const height = 6.6 + rows * lineHeight(TYPE.small, 1.3) + 2.6
 
-  doc.y = y + headerHeight + 4
+    blocks.push({
+      height: height + 3,
+      draw: (x, y) => {
+        setFill(pdf, hexToRgb('#F1F6FB'))
+        pdf.rect(x, y, width, height, 'F')
+        setFill(pdf, palette.accent)
+        pdf.rect(x, y, width, 0.7, 'F')
+
+        meta.forEach((item, i) => {
+          const mx = x + 4 + i * cellWidth
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(TYPE.label - 0.4)
+          setText(pdf, palette.accent)
+          drawTrackedText(pdf, item.label.toUpperCase(), mx, y + 4.6, 0.55)
+
+          pdf.setFont('helvetica', 'bold')
+          pdf.setFontSize(TYPE.small)
+          setText(pdf, INK)
+          valueLines[i].slice(0, 2).forEach((line, li) => {
+            pdf.text(line, mx, y + 6.2 + lineHeight(TYPE.small, 1.3) * (li + 0.74))
+          })
+
+          if (i > 0) {
+            setStroke(pdf, HAIRLINE)
+            pdf.setLineWidth(0.3)
+            pdf.line(mx - 3, y + 2.4, mx - 3, y + height - 2.4)
+          }
+        })
+      },
+    })
+  }
+
+  if (advisory.infrastructureTypes.filter(Boolean).length) {
+    blocks.push(...tagBlocks(pdf, advisory.infrastructureTypes, width, ACCENT.slate))
+  }
+
+  return blocks
 }
 
 /* ------------------------------------------------------------------ *
- * Document body
+ * Flow engine
+ * ------------------------------------------------------------------ */
+
+/** Placement record used by the layout audit in scripts/verify-pdf.mjs. */
+export interface Placement {
+  page: number
+  label: string
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+class DocumentFlow {
+  private y = MARGIN.top
+  private sectionNumber = 1
+  private page = 1
+
+  constructor(
+    private pdf: jsPDF,
+    private palette: Palette,
+    private advisoryNumber: string,
+    private trace?: Placement[],
+  ) {}
+
+  private get bottom(): number {
+    return PAGE.height - MARGIN.bottom - FOOTER_ZONE
+  }
+
+  get contentTop(): number {
+    return MARGIN.top + RUNNING_HEADER_HEIGHT
+  }
+
+  get contentBottom(): number {
+    return this.bottom
+  }
+
+  /** Draws a block and records where it landed. */
+  private paint(block: Block, x: number, y: number, width: number, label: string) {
+    block.draw(x, y)
+    this.trace?.push({ page: this.page, label, x, y, width, height: block.height })
+  }
+
+  newPage() {
+    this.pdf.addPage('a4', 'portrait')
+    this.page += 1
+    this.drawRunningHeader()
+    this.y = MARGIN.top + RUNNING_HEADER_HEIGHT
+  }
+
+  private drawRunningHeader() {
+    const { pdf, palette } = this
+    const y = MARGIN.top
+
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(TYPE.label)
+    setText(pdf, palette.header)
+    drawTrackedText(pdf, BRAND.name, MARGIN.left, y, 0.6)
+
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(TYPE.label + 0.4)
+    setText(pdf, MUTED)
+    const ref = `Advisory No: ${this.advisoryNumber}`
+    pdf.text(ref, PAGE.width - MARGIN.right - pdf.getTextWidth(ref), y)
+
+    setFill(pdf, palette.accent)
+    pdf.rect(MARGIN.left, y + 1.8, CONTENT_WIDTH, 0.6, 'F')
+    setFill(pdf, palette.band)
+    pdf.rect(MARGIN.left, y + 1.8, 24, 0.6, 'F')
+  }
+
+  /** Places blocks in a single column, breaking pages as needed. */
+  private placeColumn(blocks: Block[], x: number, width: number, label: string, continuation?: Block) {
+    for (const block of blocks) {
+      if (this.y + block.height > this.bottom) {
+        this.newPage()
+        if (continuation) {
+          this.paint(continuation, x, this.y, width, `${label} (cont.)`)
+          this.y += continuation.height
+        }
+      }
+      this.paint(block, x, this.y, width, label)
+      this.y += block.height
+    }
+  }
+
+  placeCover(blocks: Block[], label = 'cover') {
+    this.placeColumn(blocks, MARGIN.left, CONTENT_WIDTH, label)
+    this.y += SECTION_GAP - 1
+  }
+
+  private placeSection(spec: SectionSpec, blocks: Block[]) {
+    const { pdf } = this
+    const header = spec.bare
+      ? null
+      : sectionHeaderBlock(pdf, this.sectionNumber, spec.title, spec.color, CONTENT_WIDTH)
+
+    // Keep the header with the opening content so no heading is left as a widow.
+    const opening = blocks.slice(0, 2).reduce((total, block) => total + block.height, 0)
+    const lead = (header?.height ?? 0) + Math.min(opening, 26)
+    if (this.y + lead > this.bottom) this.newPage()
+
+    if (header) {
+      this.paint(header, MARGIN.left, this.y, CONTENT_WIDTH, `${spec.title} header`)
+      this.y += header.height
+      this.sectionNumber += 1
+    }
+
+    this.placeColumn(
+      blocks,
+      MARGIN.left,
+      CONTENT_WIDTH,
+      spec.title,
+      spec.bare ? undefined : continuationBlock(pdf, spec.title, spec.color),
+    )
+    this.y += SECTION_GAP
+  }
+
+  private placePair(
+    left: { spec: SectionSpec; blocks: Block[]; height: number },
+    right: { spec: SectionSpec; blocks: Block[]; height: number },
+    columnWidth: number,
+  ) {
+    const rowHeight = Math.max(left.height, right.height)
+    if (this.y + rowHeight > this.bottom) this.newPage()
+
+    const top = this.y
+    const columns: [typeof left, number][] = [
+      [left, MARGIN.left],
+      [right, MARGIN.left + columnWidth + COLUMN_GAP],
+    ]
+
+    for (const [column, x] of columns) {
+      const header = sectionHeaderBlock(
+        this.pdf,
+        this.sectionNumber,
+        column.spec.title,
+        column.spec.color,
+        columnWidth,
+      )
+      this.sectionNumber += 1
+      this.paint(header, x, top, columnWidth, `${column.spec.title} header`)
+      let cursor = top + header.height
+      for (const block of column.blocks) {
+        this.paint(block, x, cursor, columnWidth, column.spec.title)
+        cursor += block.height
+      }
+    }
+
+    this.y = top + rowHeight + SECTION_GAP
+  }
+
+  /** Pairs short adjacent sections so pages do not end with large voids. */
+  layout(specs: SectionSpec[]) {
+    const prepared = specs
+      .map(spec => ({ spec, blocks: spec.build(CONTENT_WIDTH) }))
+      .filter(entry => entry.blocks.length)
+
+    const columnWidth = (CONTENT_WIDTH - COLUMN_GAP) / 2
+    let i = 0
+
+    while (i < prepared.length) {
+      const current = prepared[i]
+      const next = prepared[i + 1]
+
+      if (next && !current.spec.solo && !next.spec.solo && !current.spec.bare && !next.spec.bare) {
+        const a = current.spec.build(columnWidth)
+        const b = next.spec.build(columnWidth)
+        const ah = sectionHeaderBlock(this.pdf, 0, current.spec.title, current.spec.color, columnWidth).height
+          + a.reduce((t, block) => t + block.height, 0)
+        const bh = sectionHeaderBlock(this.pdf, 0, next.spec.title, next.spec.color, columnWidth).height
+          + b.reduce((t, block) => t + block.height, 0)
+
+        if (a.length && b.length && ah <= PAIR_MAX_HEIGHT && bh <= PAIR_MAX_HEIGHT) {
+          this.placePair(
+            { spec: current.spec, blocks: a, height: ah },
+            { spec: next.spec, blocks: b, height: bh },
+            columnWidth,
+          )
+          i += 2
+          continue
+        }
+      }
+
+      this.placeSection(current.spec, current.blocks)
+      i += 1
+    }
+  }
+
+  finish(closing: string) {
+    const { pdf, palette } = this
+
+    const note = (size: number, rule: boolean): { lines: string[]; height: number; lh: number } => {
+      const lines = wrapText(pdf, closing, CONTENT_WIDTH, size)
+      const lh = lineHeight(size, 1.36)
+      return { lines, lh, height: lines.length * lh + (rule ? 4 : 1) }
+    }
+
+    const full = note(TYPE.caption, true)
+
+    if (this.y + full.height <= this.bottom) {
+      const block: Block = {
+        height: full.height,
+        draw: (x, y) => {
+          setStroke(pdf, palette.band)
+          pdf.setLineWidth(0.7)
+          pdf.line(x, y, x + CONTENT_WIDTH, y)
+
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(TYPE.caption)
+          setText(pdf, MUTED)
+          full.lines.forEach((line, i) => pdf.text(line, x, y + 3.4 + full.lh * (i + 0.74)))
+        },
+      }
+      this.paint(block, MARGIN.left, this.y, CONTENT_WIDTH, 'closing note')
+      this.y += block.height
+    } else {
+      // A disclaimer must never open a page of its own, so it uses the reserved
+      // band between the content area and the footer rule instead.
+      const compact = note(7, false)
+      const block: Block = {
+        height: compact.height,
+        draw: (x, y) => {
+          pdf.setFont('helvetica', 'normal')
+          pdf.setFontSize(7)
+          setText(pdf, MUTED)
+          compact.lines
+            .slice(0, 2)
+            .forEach((line, i) => pdf.text(line, x, y + compact.lh * (i + 0.74)))
+        },
+      }
+      this.paint(block, MARGIN.left, this.bottom + 1, CONTENT_WIDTH, 'closing note (compact)')
+    }
+
+    this.drawFooters()
+  }
+
+  private drawFooters() {
+    const { pdf, palette } = this
+    const total = pdf.getNumberOfPages()
+
+    for (let page = 1; page <= total; page += 1) {
+      pdf.setPage(page)
+      // Sits below the reserved note band, still well inside the printable area.
+      const y = PAGE.height - MARGIN.bottom + 4
+
+      setStroke(pdf, HAIRLINE)
+      pdf.setLineWidth(0.3)
+      pdf.line(MARGIN.left, y - 5, PAGE.width - MARGIN.right, y - 5)
+
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(TYPE.label)
+      setText(pdf, palette.header)
+      pdf.text(BRAND.shortName, MARGIN.left, y - 1.2)
+
+      pdf.setFont('helvetica', 'normal')
+      pdf.setFontSize(TYPE.label - 0.6)
+      setText(pdf, MUTED)
+      pdf.text(WING_NAME, MARGIN.left, y + 2)
+
+      pdf.setFont('helvetica', 'bold')
+      pdf.setFontSize(TYPE.label + 0.4)
+      setText(pdf, palette.accent)
+      const label = `Page ${page} of ${total}`
+      pdf.text(label, PAGE.width - MARGIN.right - pdf.getTextWidth(label), y - 1.2)
+    }
+
+    pdf.setPage(total)
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Document composition
  * ------------------------------------------------------------------ */
 
 function isExternalVideoLink(url: string): boolean {
-  if (!url) return false
-  const clean = url.trim()
+  const clean = (url || '').trim()
   if (!/^https?:\/\//i.test(clean)) return false
   return !/vercel\.app|localhost|\/content\//i.test(clean)
 }
 
-async function buildDocument(advisory: Advisory, settings: AppSettings): Promise<jsPDF> {
+async function buildDocument(
+  advisory: Advisory,
+  settings: AppSettings,
+  trace?: Placement[],
+): Promise<jsPDF> {
   const theme = themeOf(advisory.documentTheme)
   const severity = normalizeSeverity(advisory.severity)
+  const hazardHex = hazardColor(advisory.hazard)
 
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true })
   pdf.setProperties({
@@ -714,23 +645,18 @@ async function buildDocument(advisory: Advisory, settings: AppSettings): Promise
     keywords: [advisory.hazard, advisory.province, advisory.district, severity].filter(Boolean).join(', '),
   })
 
-  const doc: Doc = {
-    pdf,
-    y: MARGIN.top,
-    sectionNumber: 1,
-    advisoryNumber:
-      cleanText(advisory.advisoryNumber) ||
-      `IRW-${new Date(advisory.createdAt).getFullYear()}-${advisory.id.slice(-6).toUpperCase()}`,
-    palette: {
-      header: hexToRgb(theme.header),
-      accent: hexToRgb(theme.accent),
-      band: hexToRgb(theme.band),
-      ink: hexToRgb(theme.ink),
-      severity: hexToRgb(SEVERITY_COLOR[severity]),
-    },
+  const palette: Palette = {
+    header: hexToRgb(theme.header),
+    accent: hexToRgb(theme.accent),
+    band: hexToRgb(theme.band),
+    ink: hexToRgb(theme.ink),
+    severity: hexToRgb(SEVERITY_COLOR[severity]),
   }
 
-  // Load imagery up front; failures degrade gracefully.
+  const advisoryNumber = cleanText(advisory.advisoryNumber)
+    || `IRW-${new Date(advisory.createdAt).getFullYear()}-${advisory.id.slice(-6).toUpperCase()}`
+
+  // Imagery is resolved before layout so measurements are exact.
   const coverSource = advisory.images.find(i => i.isCover) || advisory.images[0]
   const gallerySource = advisory.images.filter(i => i !== coverSource)
 
@@ -741,48 +667,41 @@ async function buildDocument(advisory: Advisory, settings: AppSettings): Promise
     loadImageForPdf(coverSource?.dataUrl),
   ])
 
-  const galleryImages = await Promise.all(
-    gallerySource.slice(0, 12).map(async img => ({
-      caption: img.caption,
-      loaded: await loadImageForPdf(img.dataUrl),
-    })),
+  const gallery = (
+    await Promise.all(
+      gallerySource.slice(0, 12).map(async (img, index) => ({
+        caption: img.caption,
+        label: `FIGURE ${String(index + (coverImage ? 2 : 1)).padStart(2, '0')}`,
+        image: await loadImageForPdf(img.dataUrl),
+      })),
+    )
+  )
+    .filter(item => item.image)
+    .map(item => ({ ...item, image: item.image as LoadedImage }))
+
+  const flow = new DocumentFlow(pdf, palette, advisoryNumber, trace)
+
+  flow.placeCover(
+    coverBlocks(pdf, advisory, palette, advisoryNumber, { orgLogo, wingLogo, advisoryLogo }, CONTENT_WIDTH),
   )
 
-  drawCoverHeader(doc, advisory, { orgLogo, wingLogo, advisoryLogo })
-
-  if (advisory.infrastructureTypes.filter(Boolean).length) {
-    chipRow(doc, advisory.infrastructureTypes, theme.accent)
-  }
-
   if (coverImage) {
-    imageBlock(doc, coverImage, coverSource?.caption || '', 'FIGURE 01', 82)
+    // Editorial proportion: supports the advisory without consuming the page.
+    flow.placeCover(
+      imageBlocks(pdf, coverImage, coverSource?.caption || '', 'FIGURE 01', CONTENT_WIDTH, 58),
+      'cover figure',
+    )
   }
 
   const summary = sanitizeDocText(advisory.shortSummary)
-  if (summary) {
-    sectionHeading(doc, 'Executive Brief', theme.accent)
-    paragraph(doc, summary)
-  }
-
-  if (sanitizeDocText(advisory.currentSituation)) {
-    sectionHeading(doc, 'Situation / Observation', theme.accent)
-    paragraph(doc, sanitizeDocText(advisory.currentSituation))
-  }
-
-  if (sanitizeDocText(advisory.identifiedProblem)) {
-    sectionHeading(doc, 'Identified Problem', ACCENT.red)
-    calloutBlock(doc, sanitizeDocText(advisory.identifiedProblem), ACCENT.red)
-  }
-
-  if (advisory.affectedInfrastructure.filter(Boolean).length) {
-    sectionHeading(doc, 'Infrastructure at Risk', ACCENT.blue)
-    chipRow(doc, advisory.affectedInfrastructure, ACCENT.blue)
-  }
-
-  if (sanitizeDocText(advisory.risks)) {
-    sectionHeading(doc, 'Risk / Potential Impact', ACCENT.orange)
-    calloutBlock(doc, sanitizeDocText(advisory.risks), ACCENT.orange)
-  }
+  const situation = sanitizeDocText(advisory.currentSituation)
+  const problem = sanitizeDocText(advisory.identifiedProblem)
+  const risks = sanitizeDocText(advisory.risks)
+  const observed = sanitizeDocText(advisory.observedConditions)
+  const guidance = sanitizeDocText(advisory.publicGuidance)
+  const takeaway = sanitizeDocText(advisory.keyTakeaway)
+  const contact = sanitizeDocText(advisory.contactInfo)
+  const references = sanitizeDocText(advisory.references)
 
   const conditions = [
     { label: 'Weather', value: advisory.weatherCondition },
@@ -792,107 +711,135 @@ async function buildDocument(advisory: Advisory, settings: AppSettings): Promise
     { label: 'Visibility', value: advisory.visibility },
     { label: 'Other', value: advisory.otherCondition },
   ]
-  if (sanitizeDocText(advisory.observedConditions) || conditions.some(c => cleanText(c.value))) {
-    sectionHeading(doc, 'Key Observations', theme.ink)
-    paragraph(doc, sanitizeDocText(advisory.observedConditions))
-    factGrid(doc, conditions, theme.accent)
-  }
-
-  if (advisory.engineeringRecommendations.filter(Boolean).length) {
-    sectionHeading(doc, 'Engineering Recommendations', theme.accent)
-    bulletList(doc, advisory.engineeringRecommendations, theme.accent)
-  }
-
-  if (advisory.immediateActions.filter(Boolean).length) {
-    sectionHeading(doc, 'Immediate Actions', ACCENT.red)
-    bulletList(doc, advisory.immediateActions, ACCENT.red, { numbered: true })
-  }
-
-  if (advisory.shortTermMeasures.filter(Boolean).length) {
-    sectionHeading(doc, 'Short-Term Measures', ACCENT.orange)
-    bulletList(doc, advisory.shortTermMeasures, ACCENT.orange)
-  }
-
-  if (advisory.mediumTermMeasures.filter(Boolean).length) {
-    sectionHeading(doc, 'Medium-Term Measures', ACCENT.blue)
-    bulletList(doc, advisory.mediumTermMeasures, ACCENT.blue)
-  }
-
-  if (advisory.longTermMeasures.filter(Boolean).length) {
-    sectionHeading(doc, 'Long-Term Resilience Measures', ACCENT.green)
-    bulletList(doc, advisory.longTermMeasures, ACCENT.green)
-  }
-
-  if (advisory.dos.filter(Boolean).length || advisory.donts.filter(Boolean).length) {
-    sectionHeading(doc, 'Public Do & Do Not', ACCENT.green)
-    twoColumnLists(
-      doc,
-      { title: 'Do', items: advisory.dos, color: ACCENT.green },
-      { title: 'Do Not', items: advisory.donts, color: ACCENT.red },
-    )
-  }
-
-  const usableGallery = galleryImages.filter(g => g.loaded)
-  if (usableGallery.length) {
-    sectionHeading(doc, 'Visual Evidence', theme.ink)
-    usableGallery.forEach((item, i) => {
-      imageBlock(
-        doc,
-        item.loaded as LoadedImage,
-        item.caption,
-        `FIGURE ${String(i + 2).padStart(2, '0')}`,
-        78,
-      )
-    })
-  }
 
   const videoTitle = cleanText(advisory.videoTitle)
   const videoDescription = sanitizeDocText(advisory.videoDescription)
-  if (videoTitle || videoDescription || isExternalVideoLink(advisory.videoUrl)) {
-    sectionHeading(doc, 'Related Video Briefing', ACCENT.purple)
-    if (videoTitle) paragraph(doc, videoTitle, { bold: true, color: hexToRgb(ACCENT.purple) })
-    if (videoDescription) paragraph(doc, videoDescription)
-    if (isExternalVideoLink(advisory.videoUrl)) {
-      paragraph(doc, `Video link: ${advisory.videoUrl.trim()}`, {
-        size: 8.5,
-        color: hexToRgb(ACCENT.slate),
-      })
-    }
-  }
+  const videoLink = isExternalVideoLink(advisory.videoUrl) ? advisory.videoUrl.trim() : ''
 
-  if (sanitizeDocText(advisory.publicGuidance)) {
-    sectionHeading(doc, 'Public Guidance', ACCENT.purple)
-    paragraph(doc, sanitizeDocText(advisory.publicGuidance))
-  }
+  const specs: SectionSpec[] = [
+    {
+      title: 'Executive Brief',
+      color: theme.accent,
+      solo: true,
+      build: w =>
+        briefBlocks(
+          pdf,
+          [
+            { label: 'Hazard', value: advisory.hazard, color: hazardHex },
+            { label: 'Location', value: cleanText(advisory.specificLocation) || locationLabel(advisory), color: ACCENT.blue },
+            { label: 'Severity', value: severity, color: SEVERITY_COLOR[severity] },
+          ],
+          summary,
+          w,
+          theme.accent,
+        ),
+    },
+    {
+      title: 'Situation / Observation',
+      color: SECTION_COLOR.situation,
+      build: w => paragraphBlocks(pdf, situation, w),
+    },
+    {
+      title: 'Identified Problem',
+      color: SECTION_COLOR.problem,
+      build: w => calloutBlocks(pdf, problem, w, SECTION_COLOR.problem, { emphasis: true }),
+    },
+    {
+      title: 'Infrastructure at Risk',
+      color: SECTION_COLOR.assets,
+      build: w => assetCardBlocks(pdf, advisory.affectedInfrastructure, w, SECTION_COLOR.assets),
+    },
+    {
+      title: 'Risk / Potential Impact',
+      color: SECTION_COLOR.risk,
+      build: w => calloutBlocks(pdf, risks, w, SECTION_COLOR.risk, { emphasis: true }),
+    },
+    {
+      title: 'Key Observations',
+      color: SECTION_COLOR.observations,
+      solo: true,
+      build: w => [
+        ...paragraphBlocks(pdf, observed, w),
+        ...(observed ? [{ height: 1.6, draw: () => {} }] : []),
+        ...observationBlocks(pdf, conditions, w, SECTION_COLOR.observations),
+      ],
+    },
+    {
+      title: 'Engineering Recommendations',
+      color: SECTION_COLOR.recommendations,
+      solo: true,
+      build: w =>
+        numberedCardBlocks(pdf, advisory.engineeringRecommendations, w, SECTION_COLOR.recommendations),
+    },
+    {
+      title: 'Action Plan',
+      color: SECTION_COLOR.actions,
+      solo: true,
+      build: w =>
+        timelineBlocks(pdf, [
+          { label: 'Immediate', items: advisory.immediateActions, color: ACTION_PHASE_COLOR.immediate },
+          { label: 'Short Term', items: advisory.shortTermMeasures, color: ACTION_PHASE_COLOR.shortTerm },
+          { label: 'Medium Term', items: advisory.mediumTermMeasures, color: ACTION_PHASE_COLOR.mediumTerm },
+          { label: 'Long Term Resilience', items: advisory.longTermMeasures, color: ACTION_PHASE_COLOR.longTerm },
+        ], w),
+    },
+    {
+      title: 'Public Do & Do Not',
+      color: SECTION_COLOR.publicConduct,
+      solo: true,
+      build: w =>
+        dualListBlocks(
+          pdf,
+          { title: 'Do', items: advisory.dos, color: ACCENT.green },
+          { title: 'Do Not', items: advisory.donts, color: ACCENT.red },
+          w,
+        ),
+    },
+    {
+      title: 'Visual Evidence',
+      color: SECTION_COLOR.visuals,
+      solo: true,
+      build: w => imageGridBlocks(pdf, gallery, w),
+    },
+    {
+      title: 'Related Video Briefing',
+      color: SECTION_COLOR.video,
+      solo: true,
+      build: w =>
+        videoTitle || videoDescription || videoLink
+          ? videoBlocks(pdf, { title: videoTitle, description: videoDescription, url: videoLink }, w, SECTION_COLOR.video)
+          : [],
+    },
+    {
+      title: 'Public Guidance',
+      color: SECTION_COLOR.guidance,
+      build: w => calloutBlocks(pdf, guidance, w, SECTION_COLOR.guidance),
+    },
+    {
+      title: 'Key Takeaway',
+      color: theme.accent,
+      bare: true,
+      solo: true,
+      build: w => bannerBlocks(pdf, 'Key Takeaway', takeaway, w, palette),
+    },
+    {
+      title: 'Contact / Escalation',
+      color: SECTION_COLOR.contact,
+      build: w => contactBlocks(pdf, contact, w, SECTION_COLOR.contact),
+    },
+    {
+      title: 'Sources / References',
+      color: SECTION_COLOR.references,
+      build: w => referenceBlocks(pdf, references, w),
+    },
+  ]
 
-  if (sanitizeDocText(advisory.keyTakeaway)) {
-    highlightBox(doc, 'Key Takeaway', sanitizeDocText(advisory.keyTakeaway), theme.accent)
-  }
-
-  if (sanitizeDocText(advisory.contactInfo)) {
-    sectionHeading(doc, 'Contact / Escalation', ACCENT.slate)
-    paragraph(doc, sanitizeDocText(advisory.contactInfo))
-  }
-
-  if (sanitizeDocText(advisory.references)) {
-    sectionHeading(doc, 'Sources / References', ACCENT.slate)
-    paragraph(doc, sanitizeDocText(advisory.references), { size: 8.5, color: hexToRgb(ACCENT.slate) })
-  }
-
-  // Issuing statement
-  ensureSpace(doc, 22)
-  doc.y += 2
-  setStroke(pdf, doc.palette.band)
-  pdf.setLineWidth(0.8)
-  pdf.line(MARGIN.left, doc.y, PAGE.width - MARGIN.right, doc.y)
-  doc.y += 3.5
-  paragraph(
-    doc,
-    `Issued through ${BRAND.name}. ${WING_NAME}. Content is based on information entered by authorized administrators and should be used with professional engineering judgement.`,
-    { size: 7.5, color: hexToRgb(ACCENT.slate) },
+  flow.layout(specs)
+  flow.finish(
+    `Issued through ${BRAND.name}. ${WING_NAME}. Content reflects information entered by authorized administrators `
+    + 'and should be applied with professional engineering judgement.',
   )
 
-  drawFooters(doc)
   return pdf
 }
 
@@ -926,4 +873,21 @@ export async function buildAdvisoryPdfBlob(
   if (!signature.startsWith('%PDF-')) throw new Error('Generated file is not a valid PDF')
 
   return typed
+}
+
+/** Layout geometry for the automated page audit. Not used by the portal UI. */
+export async function traceAdvisoryPdf(advisory: Advisory, settings: AppSettings) {
+  const placements: Placement[] = []
+  const pdf = await buildDocument(advisory, settings, placements)
+  return {
+    placements,
+    pages: pdf.getNumberOfPages(),
+    frame: {
+      top: MARGIN.top,
+      left: MARGIN.left,
+      right: PAGE.width - MARGIN.right,
+      bottom: PAGE.height - MARGIN.bottom - FOOTER_ZONE,
+      contentTop: MARGIN.top + RUNNING_HEADER_HEIGHT,
+    },
+  }
 }

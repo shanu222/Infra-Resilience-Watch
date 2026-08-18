@@ -61,6 +61,7 @@ export const KIND_LABEL: Record<ContentKind, string> = {
 export const BRAND = {
   name: 'INFRASTRUCTURE RESILIENCE WATCH',
   shortName: 'Resilience Watch',
+  wing: 'Infrastructure Advisory & Project Development Wing',
   tagline: 'Observe \u2022 Assess \u2022 Advise \u2022 Build Resilience',
   description: 'Daily infrastructure intelligence, risks, issues, advisories and resilient solutions for Pakistan.',
   heroLine: 'Daily intelligence on infrastructure risks, issues and resilient solutions across Pakistan.',

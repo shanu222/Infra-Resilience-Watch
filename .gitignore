@@ -14,6 +14,9 @@ logs/
 .claude-replay.*
 .tmp-*
 verify-output.pdf
+verify-terse.pdf
+.clip-test.pdf
+.pdf-preview/
 scripts/.advisory-pdf.bundle.mjs
 
 # Platform-managed agentplat state, not project source. In the
