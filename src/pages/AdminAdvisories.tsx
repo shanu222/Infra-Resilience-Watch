@@ -57,7 +57,7 @@ export default function AdminAdvisories() {
           <button
             type="button"
             onClick={() => navigate('/admin/advisories/new?kind=advisory')}
-            className="btn-3d btn-3d-primary flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm w-full sm:w-auto"
+            className="btn-3d btn-3d-primary btn-3d-scifi flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm w-full sm:w-auto"
           >
             <Plus size={18} />
             Create Content
@@ -71,7 +71,7 @@ export default function AdminAdvisories() {
               key={k.id}
               type="button"
               onClick={() => navigate(`/admin/advisories/new?kind=${k.id}`)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:border-blue-300 hover:text-blue-700 transition-all"
+              className="scifi-chip"
             >
               + {k.label}
             </button>
@@ -79,7 +79,7 @@ export default function AdminAdvisories() {
         </div>
 
         {/* Filters */}
-        <div className="glass-panel rounded-2xl p-4 mb-4">
+        <div className="portal-panel portal-panel-cyan rounded-2xl p-4 mb-4">
           <div className="flex flex-col sm:flex-row flex-wrap gap-3">
             <div className="w-full sm:flex-1 sm:min-w-48 relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -88,7 +88,7 @@ export default function AdminAdvisories() {
                 placeholder="Search by title, hazard, location..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm border border-slate-200 text-slate-700 placeholder-slate-400 focus:border-blue-400 transition-colors"
+                className="scifi-input w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-slate-700 placeholder-slate-400 transition-colors"
                 style={{ outline: 'none' }}
               />
             </div>
@@ -96,7 +96,7 @@ export default function AdminAdvisories() {
               <select
                 value={filterStatus}
                 onChange={e => setFilterStatus(e.target.value as Status | 'All')}
-                className="appearance-none pl-3 pr-8 py-2.5 rounded-xl text-sm border border-slate-200 text-slate-700 bg-white focus:border-blue-400 transition-colors"
+                className="scifi-input appearance-none pl-3 pr-8 py-2.5 rounded-xl text-sm text-slate-700 bg-white transition-colors"
                 style={{ outline: 'none' }}
               >
                 <option value="All">All Status</option>
@@ -110,7 +110,7 @@ export default function AdminAdvisories() {
               <select
                 value={filterHazard}
                 onChange={e => setFilterHazard(e.target.value as HazardType | 'All')}
-                className="appearance-none pl-3 pr-8 py-2.5 rounded-xl text-sm border border-slate-200 text-slate-700 bg-white focus:border-blue-400 transition-colors"
+                className="scifi-input appearance-none pl-3 pr-8 py-2.5 rounded-xl text-sm text-slate-700 bg-white transition-colors"
                 style={{ outline: 'none' }}
               >
                 <option value="All">All Hazards</option>
@@ -122,7 +122,7 @@ export default function AdminAdvisories() {
               <select
                 value={filterKind}
                 onChange={e => setFilterKind(e.target.value as ContentKind | 'All')}
-                className="appearance-none pl-3 pr-8 py-2.5 rounded-xl text-sm border border-slate-200 text-slate-700 bg-white focus:border-blue-400 transition-colors"
+                className="scifi-input appearance-none pl-3 pr-8 py-2.5 rounded-xl text-sm text-slate-700 bg-white transition-colors"
                 style={{ outline: 'none' }}
               >
                 <option value="All">All Types</option>
@@ -134,7 +134,7 @@ export default function AdminAdvisories() {
         </div>
 
         {/* Table */}
-        <div className="glass-panel rounded-2xl overflow-hidden">
+        <div className="portal-table-wrap rounded-2xl overflow-hidden">
           {filtered.length === 0 ? (
             <div className="p-12 text-center">
               <div className="text-slate-300 mb-4">
@@ -144,8 +144,7 @@ export default function AdminAdvisories() {
               {advisories.length === 0 && (
                 <button
                   onClick={() => navigate('/admin/advisories/new?kind=advisory')}
-                  className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold"
-                  style={{ background: 'linear-gradient(135deg, #1D4ED8, #06B6D4)' }}
+                  className="btn-3d btn-3d-primary btn-3d-scifi px-5 py-2.5 rounded-xl text-white text-sm font-semibold"
                 >
                   Create First Entry
                 </button>
@@ -155,7 +154,7 @@ export default function AdminAdvisories() {
             <div className="table-scroll">
               <table className="w-full text-sm">
                 <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
+                    <tr className="portal-table-head" style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Title</th>
                     <th className="text-left px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Type</th>
                     <th className="text-left px-3 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">Location</th>
@@ -168,7 +167,7 @@ export default function AdminAdvisories() {
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {filtered.map(a => (
-                    <tr key={a.id} className="hover:bg-slate-50 transition-colors">
+                    <tr key={a.id} className="portal-table-row">
                       <td className="px-4 py-3">
                         <button
                           onClick={() => navigate(`/admin/advisories/${a.id}/edit`)}
@@ -201,21 +200,21 @@ export default function AdminAdvisories() {
                           <button
                             title="Preview"
                             onClick={() => navigate(`/content/${a.id}`)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                            className="btn-3d-ghost p-1.5 rounded-lg text-slate-400 hover:text-blue-600 transition-all"
                           >
                             <Eye size={14} />
                           </button>
                           <button
                             title="Edit"
                             onClick={() => navigate(`/admin/advisories/${a.id}/edit`)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                            className="btn-3d-ghost p-1.5 rounded-lg text-slate-400 hover:text-slate-600 transition-all"
                           >
                             <Edit3 size={14} />
                           </button>
                           <button
                             title="Duplicate"
                             onClick={() => handleDuplicate(a.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+                            className="btn-3d-ghost p-1.5 rounded-lg text-slate-400 hover:text-slate-600 transition-all"
                           >
                             <Copy size={14} />
                           </button>
@@ -226,7 +225,7 @@ export default function AdminAdvisories() {
                                 const adv = generateAdvisoryFromIssue(a.id)
                                 navigate(`/admin/advisories/${adv.id}/edit`)
                               }}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-700 hover:bg-cyan-50 transition-all"
+                              className="btn-3d-ghost p-1.5 rounded-lg text-slate-400 hover:text-cyan-700 transition-all"
                             >
                               <FileOutput size={14} />
                             </button>
@@ -235,7 +234,7 @@ export default function AdminAdvisories() {
                             <button
                               title="Unpublish"
                               onClick={() => unpublishAdvisory(a.id)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-all"
+                              className="btn-3d-ghost p-1.5 rounded-lg text-slate-400 hover:text-amber-600 transition-all"
                             >
                               <EyeOff size={14} />
                             </button>
@@ -247,7 +246,7 @@ export default function AdminAdvisories() {
                                   alert(err instanceof Error ? err.message : 'Could not publish to the cloud database.')
                                 })
                               }}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-green-600 hover:bg-green-50 transition-all"
+                              className="btn-3d-ghost p-1.5 rounded-lg text-slate-400 hover:text-green-600 transition-all"
                             >
                               <Globe size={14} />
                             </button>

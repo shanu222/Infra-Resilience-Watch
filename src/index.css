@@ -432,6 +432,103 @@ body {
   transform: translateX(3px);
 }
 
+/* Shared portal panels and form surfaces */
+.portal-panel {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: var(--radius-card);
+  box-shadow: 0 10px 34px rgba(7,26,51,0.14), inset 0 1px 0 rgba(255,255,255,0.62);
+  border: 1px solid rgba(255,255,255,0.7);
+  transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+}
+.portal-panel:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 42px rgba(7,26,51,0.18), 0 0 24px rgba(18,184,214,0.10);
+  border-color: rgba(18,184,214,0.34);
+}
+.portal-panel-blue {
+  background: linear-gradient(160deg, rgba(239,246,255,0.95), rgba(219,234,254,0.88));
+  border-color: rgba(22,141,219,0.26);
+}
+.portal-panel-cyan {
+  background: linear-gradient(160deg, rgba(236,254,255,0.95), rgba(207,250,254,0.88));
+  border-color: rgba(18,184,214,0.26);
+}
+.portal-panel-teal {
+  background: linear-gradient(160deg, rgba(240,253,250,0.95), rgba(204,251,241,0.88));
+  border-color: rgba(16,169,154,0.26);
+}
+.portal-panel-green {
+  background: linear-gradient(160deg, rgba(240,253,244,0.95), rgba(220,252,231,0.88));
+  border-color: rgba(32,178,107,0.26);
+}
+.portal-panel-purple {
+  background: linear-gradient(160deg, rgba(250,245,255,0.95), rgba(237,233,254,0.88));
+  border-color: rgba(115,87,217,0.26);
+}
+.portal-panel-amber {
+  background: linear-gradient(160deg, rgba(255,251,235,0.95), rgba(254,243,199,0.88));
+  border-color: rgba(242,169,0,0.28);
+}
+.portal-panel-red {
+  background: linear-gradient(160deg, rgba(255,241,242,0.95), rgba(255,228,230,0.88));
+  border-color: rgba(229,72,77,0.28);
+}
+.portal-panel-slate {
+  background: linear-gradient(160deg, rgba(248,250,252,0.95), rgba(241,245,249,0.90));
+  border-color: rgba(100,116,139,0.22);
+}
+
+.scifi-chip {
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.45rem 0.8rem;
+  transition: all 0.22s ease;
+  border: 1px solid rgba(18,184,214,0.18);
+  background: rgba(255,255,255,0.68);
+  color: #475569;
+}
+.scifi-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(18,184,214,0.12);
+}
+.scifi-chip-active {
+  background: linear-gradient(135deg, rgba(22,141,219,0.20), rgba(18,184,214,0.14));
+  color: #0F6BAB;
+  border-color: rgba(18,184,214,0.38);
+  box-shadow: 0 0 18px rgba(18,184,214,0.14), inset 0 1px 0 rgba(255,255,255,0.58);
+}
+
+.scifi-input {
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,249,253,0.96));
+  border: 1px solid rgba(203,213,225,0.9);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+.scifi-input:focus {
+  border-color: rgba(18,184,214,0.65);
+  box-shadow: 0 0 0 3px rgba(18,184,214,0.16), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.portal-table-wrap {
+  background: linear-gradient(160deg, rgba(248,250,252,0.95), rgba(241,245,249,0.90));
+  border: 1px solid rgba(148,163,184,0.18);
+  box-shadow: 0 10px 34px rgba(7,26,51,0.14), inset 0 1px 0 rgba(255,255,255,0.62);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.portal-table-head {
+  background: linear-gradient(90deg, rgba(7,26,51,0.04), rgba(18,184,214,0.08), rgba(7,26,51,0.04));
+}
+.portal-table-row {
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.portal-table-row:hover {
+  transform: translateX(2px);
+  background: rgba(18,184,214,0.05);
+}
+
 /* ============================================================
    LOGIN PANEL
    ============================================================ */

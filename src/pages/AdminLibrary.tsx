@@ -56,25 +56,21 @@ export default function AdminLibrary() {
           <button
             type="button"
             onClick={() => setShowAdd(true)}
-            className="btn-3d btn-3d-primary flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm w-full sm:w-auto"
+            className="btn-3d btn-3d-primary btn-3d-scifi flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm w-full sm:w-auto"
           >
             <Plus size={18} /> Add Item
           </button>
         </div>
 
         {/* Filters */}
-        <div className="glass-panel rounded-2xl p-4 mb-4">
+        <div className="portal-panel portal-panel-cyan rounded-2xl p-4 mb-4">
           <div className="flex flex-wrap gap-3">
             <div className="flex gap-1.5 flex-wrap">
               {(['All', ...CATEGORIES] as const).map(c => (
                 <button
                   key={c}
                   onClick={() => setFilterCat(c as any)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                  style={{
-                    background: filterCat === c ? '#1D4ED8' : '#f8fafc',
-                    color: filterCat === c ? 'white' : '#64748b',
-                  }}
+                  className={`scifi-chip ${filterCat === c ? 'scifi-chip-active' : ''}`}
                 >
                   {c}
                 </button>
@@ -83,7 +79,7 @@ export default function AdminLibrary() {
             <select
               value={filterHazard}
               onChange={e => setFilterHazard(e.target.value)}
-              className="ml-auto px-3 py-1.5 rounded-lg border border-slate-200 text-xs text-slate-600 bg-white"
+              className="scifi-input ml-auto px-3 py-1.5 rounded-lg text-xs text-slate-600 bg-white"
               style={{ outline: 'none' }}
             >
               {['All', ...HAZARDS].map(h => <option key={h} value={h}>{h}</option>)}
@@ -93,14 +89,14 @@ export default function AdminLibrary() {
 
         {/* Items grid */}
         {filtered.length === 0 ? (
-          <div className="glass-panel rounded-2xl p-12 text-center">
+          <div className="portal-panel portal-panel-slate rounded-2xl p-12 text-center">
             <BookOpen size={36} className="mx-auto mb-3 text-slate-300" />
             <p className="text-slate-500 text-sm">No items found. Add items to build your library.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filtered.map(item => (
-              <div key={item.id} className="glass-panel rounded-xl p-4 group hover:border-slate-200 transition-all">
+              <div key={item.id} className="portal-panel portal-panel-blue rounded-xl p-4 group transition-all">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex gap-1.5 flex-wrap">
                     <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: CAT_COLORS[item.category], color: CAT_TEXT[item.category] }}>
@@ -113,7 +109,7 @@ export default function AdminLibrary() {
                   </div>
                   <button
                     onClick={() => deleteLibraryItem(item.id)}
-                    className="p-1 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
+                    className="btn-3d-ghost p-1 rounded-lg text-slate-300 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -128,7 +124,7 @@ export default function AdminLibrary() {
       {/* Add modal */}
       {showAdd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="glass-panel modal-sheet rounded-2xl shadow-2xl">
+          <div className="portal-panel portal-panel-purple modal-sheet rounded-2xl shadow-2xl">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-semibold text-slate-700">Add Library Item</h3>
               <button onClick={() => setShowAdd(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
@@ -141,7 +137,7 @@ export default function AdminLibrary() {
                 <select
                   value={newItem.category}
                   onChange={e => setNewItem(p => ({ ...p, category: e.target.value as any }))}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white"
+                  className="scifi-input w-full px-3 py-2.5 rounded-xl text-sm text-slate-700 bg-white"
                   style={{ outline: 'none' }}
                 >
                   {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -153,7 +149,7 @@ export default function AdminLibrary() {
                   <select
                     value={newItem.hazard}
                     onChange={e => setNewItem(p => ({ ...p, hazard: e.target.value as any }))}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white"
+                    className="scifi-input w-full px-3 py-2.5 rounded-xl text-sm text-slate-700 bg-white"
                     style={{ outline: 'none' }}
                   >
                     {HAZARDS.map(h => <option key={h} value={h}>{h}</option>)}
@@ -164,7 +160,7 @@ export default function AdminLibrary() {
                   <select
                     value={newItem.infrastructure}
                     onChange={e => setNewItem(p => ({ ...p, infrastructure: e.target.value }))}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 bg-white"
+                    className="scifi-input w-full px-3 py-2.5 rounded-xl text-sm text-slate-700 bg-white"
                     style={{ outline: 'none' }}
                   >
                     {INFRA.map(i => <option key={i} value={i}>{i}</option>)}
@@ -178,19 +174,18 @@ export default function AdminLibrary() {
                   onChange={e => setNewItem(p => ({ ...p, text: e.target.value }))}
                   placeholder="Enter the reusable content item..."
                   rows={3}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 resize-none"
+                  className="scifi-input w-full px-3 py-2.5 rounded-xl text-sm text-slate-700 resize-none"
                   style={{ outline: 'none' }}
                 />
               </div>
               <div className="flex gap-3">
-                <button onClick={() => setShowAdd(false)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                <button onClick={() => setShowAdd(false)} className="btn-3d-ghost flex-1 py-2.5 rounded-xl text-sm font-medium text-slate-600">
                   Cancel
                 </button>
                 <button
                   onClick={handleAdd}
                   disabled={!newItem.text.trim()}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white"
-                  style={{ background: newItem.text.trim() ? '#1D4ED8' : '#94a3b8', cursor: newItem.text.trim() ? 'pointer' : 'not-allowed' }}
+                  className="btn-3d btn-3d-primary btn-3d-scifi flex-1 py-2.5 rounded-xl text-sm font-semibold text-white"
                 >
                   Add to Library
                 </button>

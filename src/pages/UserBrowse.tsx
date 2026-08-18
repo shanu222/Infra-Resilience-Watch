@@ -72,7 +72,7 @@ export default function UserBrowse({ section }: { section: keyof typeof SECTIONS
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Page header */}
-      <div className="glass-panel rounded-2xl p-6 mb-7 anim-fade-up" style={{ borderTop: `3px solid ${meta.accent}` }}>
+      <div className="portal-panel portal-panel-blue rounded-2xl p-6 mb-7 anim-fade-up" style={{ borderTop: `3px solid ${meta.accent}` }}>
         <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: meta.accent }}>
           {meta.eyebrow}
         </div>
@@ -91,7 +91,7 @@ export default function UserBrowse({ section }: { section: keyof typeof SECTIONS
       </div>
 
       {items.length === 0 ? (
-        <div className="glass-panel rounded-2xl p-12 sm:p-16 text-center anim-scale">
+        <div className="portal-panel portal-panel-slate rounded-2xl p-12 sm:p-16 text-center anim-scale">
           <div
             className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: 'linear-gradient(135deg,#eff6ff,#dbeafe)', border: '1px solid #bfdbfe' }}

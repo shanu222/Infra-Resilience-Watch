@@ -57,10 +57,10 @@ function ListEditor({ label, items, onChange, placeholder }: { label: string; it
               value={item}
               onChange={e => update(i, e.target.value)}
               placeholder={placeholder || `Item ${i + 1}`}
-              className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-700 focus:border-blue-400 transition-colors"
+              className="scifi-input flex-1 px-3 py-2 rounded-xl text-sm text-slate-700 transition-colors"
               style={{ outline: 'none' }}
             />
-            <button onClick={() => remove(i)} className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
+            <button onClick={() => remove(i)} className="btn-3d-ghost p-2 rounded-xl text-slate-400 hover:text-red-500 transition-all">
               <X size={14} />
             </button>
           </div>
@@ -68,7 +68,7 @@ function ListEditor({ label, items, onChange, placeholder }: { label: string; it
       </div>
       <button
         onClick={add}
-        className="mt-2 flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 font-medium px-2 py-1 rounded-lg hover:bg-blue-50 transition-all"
+        className="mt-2 btn-3d-ghost flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-all"
       >
         <Plus size={13} /> Add item
       </button>
@@ -78,7 +78,7 @@ function ListEditor({ label, items, onChange, placeholder }: { label: string; it
 
 function FieldGroup({ children, title }: { children: React.ReactNode; title?: string }) {
   return (
-    <div className="glass-panel rounded-2xl p-5 mb-4">
+    <div className="portal-panel portal-panel-blue rounded-2xl p-5 mb-4 anim-fade-up">
       {title && <h3 className="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">{title}</h3>}
       <div className="space-y-4">{children}</div>
     </div>
@@ -96,9 +96,9 @@ function Field({ label, required, children }: { label: string; required?: boolea
   )
 }
 
-const INPUT_CLS = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 focus:border-blue-400 transition-colors bg-white"
-const SELECT_CLS = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 focus:border-blue-400 transition-colors bg-white appearance-none"
-const TEXTAREA_CLS = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 focus:border-blue-400 transition-colors bg-white resize-y min-h-24"
+const INPUT_CLS = "scifi-input w-full px-3 py-2.5 rounded-xl text-sm text-slate-700 transition-colors bg-white"
+const SELECT_CLS = "scifi-input w-full px-3 py-2.5 rounded-xl text-sm text-slate-700 transition-colors bg-white appearance-none"
+const TEXTAREA_CLS = "scifi-input w-full px-3 py-2.5 rounded-xl text-sm text-slate-700 transition-colors bg-white resize-y min-h-24"
 
 export default function AdminEditor() {
   const { advisories, saveContent, nextAdvisoryNumber, settings, library } = useApp()
@@ -243,7 +243,7 @@ export default function AdminEditor() {
           <button
             type="button"
             onClick={() => navigate('/admin/advisories')}
-            className="p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all"
+            className="btn-3d-ghost p-2 rounded-xl text-slate-500 hover:text-slate-700 transition-all"
             aria-label="Back to content library"
           >
             <ChevronLeft size={18} />
@@ -262,21 +262,21 @@ export default function AdminEditor() {
             <button
               type="button"
               onClick={() => setTab('preview')}
-              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-all flex-1 sm:flex-none"
+              className="btn-3d-ghost flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-sm text-slate-600 transition-all flex-1 sm:flex-none"
             >
               <Eye size={14} /> Preview
             </button>
             <button
               type="button"
               onClick={() => handleSave(false)}
-              className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all flex-1 sm:flex-none"
+              className="btn-3d-ghost flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-slate-700 transition-all flex-1 sm:flex-none"
             >
               <Save size={14} /> Save Draft
             </button>
             <button
               type="button"
               onClick={() => handleSave(true)}
-              className="btn-3d btn-3d-primary flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm flex-1 sm:flex-none"
+              className="btn-3d btn-3d-primary btn-3d-scifi flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm flex-1 sm:flex-none"
             >
               <Globe size={14} /> Publish
             </button>
@@ -285,13 +285,13 @@ export default function AdminEditor() {
 
         {/* Template selector */}
         {isNew && (
-          <div className="bg-blue-50 border-b border-blue-100 px-6 py-3 flex items-center gap-3 flex-wrap">
+          <div className="portal-panel portal-panel-cyan rounded-2xl mx-4 sm:mx-6 mt-4 px-6 py-3 flex items-center gap-3 flex-wrap">
             <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Quick Start:</span>
             {HAZARD_TEMPLATES.map(tmpl => (
               <button
                 key={tmpl.id}
                 onClick={() => applyTemplate(tmpl.id)}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 transition-colors border border-blue-200"
+                className="scifi-chip scifi-chip-active text-xs"
               >
                 {tmpl.name}
               </button>
@@ -308,7 +308,7 @@ export default function AdminEditor() {
                 onClick={() => setTab(t.id)}
                 className={`px-4 py-3 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${
                   tab === t.id
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-cyan-500 text-cyan-600'
                     : 'border-transparent text-slate-500 hover:text-slate-700'
                 }`}
               >
@@ -332,12 +332,8 @@ export default function AdminEditor() {
                         key={k.id}
                         type="button"
                         onClick={() => set('kind', k.id)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                        style={{
-                          background: form.kind === k.id ? '#dbeafe' : '#f8fafc',
-                          color: form.kind === k.id ? '#1e40af' : '#64748b',
-                          border: `1px solid ${form.kind === k.id ? '#93c5fd' : '#e2e8f0'}`,
-                        }}
+                        className={`scifi-chip ${form.kind === k.id ? 'scifi-chip-active' : ''}`}
+                        style={undefined}
                       >
                         {k.label}
                       </button>
@@ -418,7 +414,7 @@ export default function AdminEditor() {
                         <button
                           key={s}
                           onClick={() => set('severity', s)}
-                          className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                          className="scifi-chip rounded-xl text-sm font-semibold transition-all"
                           style={{
                             background: isActive ? c.bg : '#f8fafc',
                             color: isActive ? c.text : '#64748b',

@@ -56,7 +56,7 @@ export default function About() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
       {/* Platform intro */}
-      <div className="glass-panel rounded-2xl p-6 sm:p-8 mb-8 anim-fade-up" style={{ borderTop: '3px solid #168DDB' }}>
+      <div className="portal-panel portal-panel-blue rounded-2xl p-6 sm:p-8 mb-8 anim-fade-up" style={{ borderTop: '3px solid #168DDB' }}>
         <div className="flex items-start gap-4 mb-6">
           <div
             className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
@@ -95,7 +95,7 @@ export default function About() {
             return (
               <div
                 key={p.title}
-                className={`glass-panel rounded-2xl p-5 anim-fade-up delay-${(idx + 1) * 50} hover:shadow-lg transition-shadow`}
+                className={`portal-panel portal-panel-slate rounded-2xl p-5 anim-fade-up delay-${(idx + 1) * 50} hover:shadow-lg transition-shadow`}
                 style={{ borderLeft: `4px solid ${p.color}` }}
               >
                 <div className="flex items-center gap-3 mb-3">
@@ -117,7 +117,7 @@ export default function About() {
       </div>
 
       {/* Content types */}
-      <div className="glass-panel rounded-2xl p-6 anim-fade-up delay-300">
+      <div className="portal-panel portal-panel-purple rounded-2xl p-6 anim-fade-up delay-300">
         <div className="text-xs font-bold uppercase tracking-widest mb-1 section-eyebrow">Published content</div>
         <h2 className="text-lg font-bold text-slate-800 mb-4" style={{ fontFamily: 'DM Serif Display, serif' }}>
           What is published on this platform
