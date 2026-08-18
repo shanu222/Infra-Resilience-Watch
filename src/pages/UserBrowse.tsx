@@ -66,7 +66,7 @@ export default function UserBrowse({ section }: { section: keyof typeof SECTIONS
       </div>
 
       {items.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-12 text-center">
+        <div className="glass-panel rounded-2xl p-12 text-center">
           <Shield size={36} className="mx-auto mb-3 text-slate-300" />
           <h2 className="text-lg font-bold text-slate-600 mb-2" style={{ fontFamily: 'DM Serif Display, serif' }}>
             No published items yet

@@ -7,23 +7,25 @@ import AdvisoryDocument from '../components/AdvisoryDocument'
 import { PROVINCE_NAMES, getDistricts } from '../data/pakistan'
 import { HAZARD_TEMPLATES } from '../data/templates'
 import { HAZARDS, ADVISORY_TYPES, SEVERITIES, INFRA_TYPES, ISSUE_TYPES, CONTENT_KINDS, KIND_LABEL } from '../data/constants'
-import type { Advisory, AdvisoryType, ContentKind, HazardType, IssueType, Severity, AdvisoryImage } from '../types'
+import { BACKGROUND_TEMPLATES, DOCUMENT_THEMES } from '../data/documentDesign'
+import type { Advisory, AdvisoryType, ContentKind, HazardType, IssueType, Severity, AdvisoryImage, DocumentTheme } from '../types'
 
 const AFFECTED_INFRA = INFRA_TYPES
 
 const TABS = [
-  { id: 'basic', label: 'Basic Info' },
-  { id: 'location', label: 'Location' },
-  { id: 'situation', label: 'Situation' },
-  { id: 'content', label: 'Content' },
-  { id: 'media', label: 'Media' },
-  { id: 'supporting', label: 'Supporting' },
-  { id: 'preview', label: 'Preview' },
+  { id: 'basic', label: '1. Basic' },
+  { id: 'location', label: '2. Location' },
+  { id: 'situation', label: '3. Observation' },
+  { id: 'content', label: '4. Recommendations' },
+  { id: 'media', label: '5. Media' },
+  { id: 'design', label: '6. Document Design' },
+  { id: 'preview', label: '7. Preview & Publish' },
 ]
 
 function blankAdvisory(kind: ContentKind = 'issue'): Omit<Advisory, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'viewCount'> {
   return {
-    kind, issueType: '', shortSummary: '', videoUrl: '', featured: false,
+    kind, issueType: '', shortSummary: '', videoUrl: '', videoTitle: '', videoDescription: '', videoThumbnail: '', videoDuration: '',
+    featured: false, advisoryNumber: '', identifiedProblem: '',
     title: '', type: 'Infrastructure Advisory', hazard: 'Flood', severity: 'Advisory',
     province: '', district: '', specificLocation: '', infrastructureTypes: [],
     currentSituation: '', observedConditions: '', affectedInfrastructure: [],
@@ -31,6 +33,7 @@ function blankAdvisory(kind: ContentKind = 'issue'): Omit<Advisory, 'id' | 'crea
     risks: '', immediateActions: [''], shortTermMeasures: [''], mediumTermMeasures: [''], longTermMeasures: [''],
     dos: [''], donts: [''], engineeringRecommendations: [''],
     publicGuidance: '', contactInfo: '', images: [], references: '', keyTakeaway: '',
+    documentTheme: 'blue-engineering', backgroundTemplate: 'ndma-blue', customBackground: '', orgLogo: '', wingLogo: '',
     status: 'Draft', publishedAt: null, expiryDate: null, publishDate: null,
   }
 }
@@ -97,7 +100,7 @@ const SELECT_CLS = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-s
 const TEXTAREA_CLS = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 focus:border-blue-400 transition-colors bg-white resize-y min-h-24"
 
 export default function AdminEditor() {
-  const { advisories, createAdvisory, updateAdvisory, publishAdvisory } = useApp()
+  const { advisories, createAdvisory, updateAdvisory, publishAdvisory, nextAdvisoryNumber, settings, library } = useApp()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [params] = useSearchParams()
@@ -105,12 +108,26 @@ export default function AdminEditor() {
   const existing = isNew ? null : advisories.find(a => a.id === id)
   const initialKind = (params.get('kind') as ContentKind) || 'issue'
 
-  const [form, setForm] = useState(() => existing ? { ...blankAdvisory(), ...existing } : blankAdvisory(initialKind))
+  const [form, setForm] = useState(() => {
+    const base = existing ? { ...blankAdvisory(), ...existing } : blankAdvisory(initialKind)
+    if (!existing) {
+      base.advisoryNumber = ''
+      base.documentTheme = settings.defaultTheme
+      base.backgroundTemplate = settings.defaultBackgroundTemplate
+      base.customBackground = settings.defaultCustomBackground
+      base.orgLogo = settings.orgLogo
+      base.wingLogo = settings.wingLogo
+    }
+    return base
+  })
   const [tab, setTab] = useState('basic')
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile' | 'print'>('desktop')
   const [saved, setSaved] = useState(false)
   const [showLibrary, setShowLibrary] = useState<string | null>(null)
-  const { library } = useApp()
   const fileRef = useRef<HTMLInputElement>(null)
+  const bgRef = useRef<HTMLInputElement>(null)
+  const thumbRef = useRef<HTMLInputElement>(null)
+  const logoRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (existing) setForm({ ...blankAdvisory(), ...existing })
@@ -150,6 +167,7 @@ export default function AdminEditor() {
 
   function handleSave(publish = false) {
     const data = { ...form }
+    if (!data.advisoryNumber) data.advisoryNumber = nextAdvisoryNumber()
     if (publish) data.status = 'Published'
 
     if (isNew) {
@@ -330,11 +348,29 @@ export default function AdminEditor() {
                     type="text"
                     value={form.title}
                     onChange={e => set('title', e.target.value)}
-                    placeholder="e.g. Flood damage on N-55 near Taunsa Barrage"
+                    placeholder="e.g. Flood Risk to Commercial Infrastructure in Attock"
                     className={INPUT_CLS}
                     style={{ outline: 'none' }}
                   />
                 </Field>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Advisory Number">
+                    <input
+                      type="text"
+                      value={form.advisoryNumber || ''}
+                      onChange={e => set('advisoryNumber', e.target.value)}
+                      placeholder="Auto-assigned on save, e.g. IRW-2026-001"
+                      className={INPUT_CLS}
+                      style={{ outline: 'none' }}
+                    />
+                  </Field>
+                  <Field label="Issue Type">
+                    <select value={form.issueType || ''} onChange={e => set('issueType', e.target.value as IssueType | '')} className={SELECT_CLS} style={{ outline: 'none' }}>
+                      <option value="">— Select if applicable —</option>
+                      {ISSUE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </Field>
+                </div>
                 <Field label="Short Summary">
                   <textarea
                     value={form.shortSummary || ''}
@@ -499,6 +535,16 @@ export default function AdminEditor() {
                     style={{ outline: 'none' }}
                   />
                 </Field>
+                <Field label="Identified Problem">
+                  <textarea
+                    value={form.identifiedProblem || ''}
+                    onChange={e => set('identifiedProblem', e.target.value)}
+                    placeholder="e.g. Blocked urban drain causing commercial access flooding"
+                    className={TEXTAREA_CLS}
+                    rows={3}
+                    style={{ outline: 'none' }}
+                  />
+                </Field>
                 <Field label="Observed / Reported Conditions">
                   <textarea
                     value={form.observedConditions}
@@ -626,14 +672,32 @@ export default function AdminEditor() {
             <div>
               <FieldGroup title="Video">
                 <Field label="Video URL (YouTube, Vimeo or direct link)">
-                  <input
-                    type="url"
-                    value={form.videoUrl || ''}
-                    onChange={e => set('videoUrl', e.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    className={INPUT_CLS}
-                    style={{ outline: 'none' }}
-                  />
+                  <input type="url" value={form.videoUrl || ''} onChange={e => set('videoUrl', e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className={INPUT_CLS} style={{ outline: 'none' }} />
+                </Field>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Video Title">
+                    <input type="text" value={form.videoTitle || ''} onChange={e => set('videoTitle', e.target.value)} className={INPUT_CLS} style={{ outline: 'none' }} />
+                  </Field>
+                  <Field label="Duration">
+                    <input type="text" value={form.videoDuration || ''} onChange={e => set('videoDuration', e.target.value)} placeholder="e.g. 3:45" className={INPUT_CLS} style={{ outline: 'none' }} />
+                  </Field>
+                </div>
+                <Field label="Video Description">
+                  <textarea value={form.videoDescription || ''} onChange={e => set('videoDescription', e.target.value)} className={TEXTAREA_CLS} rows={2} style={{ outline: 'none' }} />
+                </Field>
+                <Field label="Thumbnail">
+                  <input ref={thumbRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    const reader = new FileReader()
+                    reader.onload = ev => set('videoThumbnail', ev.target?.result as string)
+                    reader.readAsDataURL(file)
+                  }} />
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => thumbRef.current?.click()} className="px-3 py-2 rounded-xl border text-sm">Upload thumbnail</button>
+                    {form.videoThumbnail && <button type="button" onClick={() => set('videoThumbnail', '')} className="px-3 py-2 rounded-xl border text-sm text-red-600">Remove</button>}
+                  </div>
+                  {form.videoThumbnail && <img src={form.videoThumbnail} alt="" className="mt-2 h-24 object-cover rounded-lg" />}
                 </Field>
               </FieldGroup>
               <FieldGroup title="Photographs">
@@ -699,39 +763,81 @@ export default function AdminEditor() {
             </div>
           )}
 
-          {/* SUPPORTING */}
-          {tab === 'supporting' && (
+          {/* DOCUMENT DESIGN */}
+          {tab === 'design' && (
             <div>
-              <FieldGroup title="Supporting Information">
+              <FieldGroup title="Background Template">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {BACKGROUND_TEMPLATES.map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => set('backgroundTemplate', t.id)}
+                      className="rounded-xl overflow-hidden border-2 text-left"
+                      style={{ borderColor: form.backgroundTemplate === t.id ? '#1769AA' : '#e2e8f0' }}
+                    >
+                      <div className="h-16" style={{ background: t.preview }} />
+                      <div className="px-2 py-2 text-[11px] font-semibold text-slate-700">{t.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </FieldGroup>
+              <FieldGroup title="Custom Background">
+                <input ref={bgRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const reader = new FileReader()
+                  reader.onload = ev => {
+                    setForm(prev => ({ ...prev, customBackground: ev.target?.result as string, backgroundTemplate: 'custom' }))
+                  }
+                  reader.readAsDataURL(file)
+                }} />
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={() => bgRef.current?.click()} className="btn-3d btn-3d-primary px-4 py-2 rounded-xl text-sm">Upload background</button>
+                  {form.customBackground && (
+                    <button type="button" onClick={() => { set('customBackground', ''); set('backgroundTemplate', 'ndma-blue') }} className="px-4 py-2 rounded-xl border text-sm">Remove</button>
+                  )}
+                </div>
+                {form.customBackground && <img src={form.customBackground} alt="Custom background" className="mt-3 h-28 w-full object-cover rounded-xl" />}
+                <p className="text-xs text-slate-500 mt-2">PNG, JPG or WEBP. A readability overlay is applied automatically so text stays clear.</p>
+              </FieldGroup>
+              <FieldGroup title="Document Theme">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {DOCUMENT_THEMES.map(t => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => set('documentTheme', t.id as DocumentTheme)}
+                      className="px-3 py-3 rounded-xl border text-left"
+                      style={{ borderColor: form.documentTheme === t.id ? t.accent : '#e2e8f0', background: form.documentTheme === t.id ? '#F8FAFC' : 'white' }}
+                    >
+                      <div className="h-2 rounded-full mb-2" style={{ background: `linear-gradient(90deg, ${t.header}, ${t.accent}, ${t.band})` }} />
+                      <div className="text-xs font-bold text-slate-700">{t.label}</div>
+                    </button>
+                  ))}
+                </div>
+              </FieldGroup>
+              <FieldGroup title="Logos for this advisory">
+                <input ref={logoRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const reader = new FileReader()
+                  reader.onload = ev => set('orgLogo', ev.target?.result as string)
+                  reader.readAsDataURL(file)
+                }} />
+                <button type="button" onClick={() => logoRef.current?.click()} className="px-4 py-2 rounded-xl border text-sm">Upload organization logo</button>
+                {form.orgLogo && <img src={form.orgLogo} alt="" className="mt-2 h-14 object-contain" />}
+                <p className="text-xs text-slate-500 mt-2">Default logos can also be set in Document Settings. These override for this advisory only.</p>
+              </FieldGroup>
+              <FieldGroup title="Key Takeaway & Contacts">
                 <Field label="Key Takeaway">
-                  <textarea
-                    value={form.keyTakeaway}
-                    onChange={e => set('keyTakeaway', e.target.value)}
-                    placeholder="The main message or key takeaway of this advisory..."
-                    className={TEXTAREA_CLS}
-                    rows={3}
-                    style={{ outline: 'none' }}
-                  />
+                  <textarea value={form.keyTakeaway} onChange={e => set('keyTakeaway', e.target.value)} className={TEXTAREA_CLS} rows={3} style={{ outline: 'none' }} />
                 </Field>
-                <Field label="Contact / Escalation Information">
-                  <textarea
-                    value={form.contactInfo}
-                    onChange={e => set('contactInfo', e.target.value)}
-                    placeholder="Contact details, escalation procedures, emergency numbers..."
-                    className={TEXTAREA_CLS}
-                    rows={3}
-                    style={{ outline: 'none' }}
-                  />
+                <Field label="Contact / Escalation">
+                  <textarea value={form.contactInfo} onChange={e => set('contactInfo', e.target.value)} className={TEXTAREA_CLS} rows={2} style={{ outline: 'none' }} />
                 </Field>
                 <Field label="Sources / References">
-                  <textarea
-                    value={form.references}
-                    onChange={e => set('references', e.target.value)}
-                    placeholder="References, source documents, standards cited..."
-                    className={TEXTAREA_CLS}
-                    rows={3}
-                    style={{ outline: 'none' }}
-                  />
+                  <textarea value={form.references} onChange={e => set('references', e.target.value)} className={TEXTAREA_CLS} rows={2} style={{ outline: 'none' }} />
                 </Field>
               </FieldGroup>
             </div>
@@ -740,23 +846,27 @@ export default function AdminEditor() {
           {/* PREVIEW */}
           {tab === 'preview' && (
             <div>
-              <div className="mb-4 flex items-center gap-3">
-                <span className="text-sm text-slate-500">Preview how this item will appear when published</span>
-                <button
-                  onClick={() => handleSave(false)}
-                  className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all"
-                >
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <span className="text-sm text-slate-500">Live document preview</span>
+                {(['desktop', 'mobile', 'print'] as const).map(mode => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setPreviewMode(mode)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider"
+                    style={{ background: previewMode === mode ? '#0B1F3A' : '#e2e8f0', color: previewMode === mode ? 'white' : '#475569' }}
+                  >
+                    {mode} preview
+                  </button>
+                ))}
+                <button onClick={() => handleSave(false)} className="ml-auto flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50">
                   <Save size={14} /> Save
                 </button>
-                <button
-                  onClick={() => handleSave(true)}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white"
-                  style={{ background: 'linear-gradient(135deg, #1D4ED8, #06B6D4)' }}
-                >
+                <button onClick={() => handleSave(true)} className="btn-3d btn-3d-green flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm">
                   <Globe size={14} /> Publish
                 </button>
               </div>
-              <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-lg">
+              <div className={`rounded-2xl overflow-hidden border border-slate-200 shadow-lg mx-auto ${previewMode === 'mobile' ? 'max-w-sm' : 'max-w-4xl'}`}>
                 <AdvisoryDocument advisory={previewAdvisory} />
               </div>
             </div>

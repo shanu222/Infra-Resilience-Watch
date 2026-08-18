@@ -99,8 +99,7 @@ export default function AdvisoryDetail() {
             <button
               type="button"
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all"
-              style={{ background: 'linear-gradient(135deg, #1D4ED8, #06B6D4)' }}
+              className="btn-3d btn-3d-primary flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm"
             >
               <Download size={14} />
               <span className="hidden sm:inline">Download PDF</span>

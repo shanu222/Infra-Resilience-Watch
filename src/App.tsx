@@ -9,6 +9,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import AdminAdvisories from './pages/AdminAdvisories'
 import AdminEditor from './pages/AdminEditor'
 import AdminLibrary from './pages/AdminLibrary'
+import AdminSettings from './pages/AdminSettings'
 import AdvisoryDetail from './pages/AdvisoryDetail'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -51,6 +52,7 @@ function AppRoutes() {
       <Route path="/admin/advisories/new" element={<RequireAuth><AdminEditor /></RequireAuth>} />
       <Route path="/admin/advisories/:id/edit" element={<RequireAuth><AdminEditor /></RequireAuth>} />
       <Route path="/admin/library" element={<RequireAuth><AdminLibrary /></RequireAuth>} />
+      <Route path="/admin/settings" element={<RequireAuth><AdminSettings /></RequireAuth>} />
       <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />

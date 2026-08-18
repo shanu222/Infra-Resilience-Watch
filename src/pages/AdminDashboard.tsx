@@ -35,13 +35,22 @@ export default function AdminDashboard() {
   advisories.forEach(a => { if (a.province) provinceCounts[a.province] = (provinceCounts[a.province] || 0) + 1 })
   const topProvinces = Object.entries(provinceCounts).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
+  const videos = advisories.filter(a => a.kind === 'video').length
+  const issues = advisories.filter(a => a.kind === 'issue' || a.kind === 'observation').length
+  const solutions = advisories.filter(a => a.kind === 'solution').length
+  const cases = advisories.filter(a => a.kind === 'case-study').length
+  const today = new Date().toDateString()
+  const todayCount = advisories.filter(a => a.status === 'Published' && new Date(a.publishedAt || a.createdAt).toDateString() === today).length
+
   const STATS = [
-    { label: 'Total Content', value: total, icon: FileText, color: '#2563EB', bg: '#EFF6FF' },
+    { label: 'Total Advisories', value: advisories.filter(a => a.kind === 'advisory').length, icon: FileText, color: '#1769AA', bg: '#EFF6FF' },
+    { label: 'Published', value: published, icon: Eye, color: '#168A5B', bg: '#ECFDF5' },
     { label: 'Drafts', value: drafts, icon: Clock, color: '#64748B', bg: '#F8FAFC' },
-    { label: 'Published', value: published, icon: Eye, color: '#059669', bg: '#ECFDF5' },
-    { label: 'Under Review', value: review, icon: AlertTriangle, color: '#7C3AED', bg: '#F5F3FF' },
-    { label: 'Scheduled', value: scheduled, icon: TrendingUp, color: '#0E7490', bg: '#ECFEFF' },
-    { label: 'Archived', value: archived, icon: Archive, color: '#78350F', bg: '#FFFBEB' },
+    { label: 'Issues', value: issues, icon: AlertTriangle, color: '#D64545', bg: '#FEF2F2' },
+    { label: 'Videos', value: videos, icon: TrendingUp, color: '#5B21B6', bg: '#F5F3FF' },
+    { label: 'Solutions', value: solutions, icon: Archive, color: '#168A5B', bg: '#ECFDF5' },
+    { label: "Today's Publications", value: todayCount, icon: BarChart3, color: '#16B8D4', bg: '#ECFEFF' },
+    { label: 'Case Studies', value: cases, icon: FileText, color: '#0B1F3A', bg: '#F1F5F9' },
   ]
 
   return (
@@ -55,8 +64,7 @@ export default function AdminDashboard() {
           </div>
           <button
             onClick={() => navigate('/admin/advisories/new')}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold shadow-lg hover:shadow-xl transition-all"
-            style={{ background: 'linear-gradient(135deg, #1D4ED8, #06B6D4)' }}
+            className="btn-3d btn-3d-primary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm"
           >
             <Plus size={18} />
             Create Content
@@ -64,7 +72,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
           {STATS.map(({ label, value, icon: Icon, color, bg }) => (
             <div key={label} className="rounded-2xl p-4 bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">

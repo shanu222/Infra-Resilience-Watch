@@ -1,23 +1,15 @@
 import { useNavigate } from 'react-router-dom'
-import { Calendar, MapPin, ArrowRight, Building2, Play } from 'lucide-react'
+import { Calendar, MapPin, Building2, Play, ArrowRight } from 'lucide-react'
 import type { Advisory } from '../types'
 import HazardIcon from './HazardIcon'
 import SeverityBadge from './SeverityBadge'
 import KindBadge from './KindBadge'
-import { excerpt, formatDate, locationLabel, userPathFor } from '../utils'
+import { excerpt, formatDate, userPathFor } from '../utils'
 
-export default function WatchCard({
-  item,
-  onOpen,
-}: {
-  item: Advisory
-  onOpen?: () => void
-}) {
+export default function WatchCard({ item, onOpen }: { item: Advisory; onOpen?: () => void }) {
   const navigate = useNavigate()
   const coverImage = item.images.find(i => i.isCover) || item.images[0]
-  const location = locationLabel(item)
-  const dateStr = formatDate(item.publishedAt || item.createdAt)
-  const summary = item.shortSummary || excerpt(item.currentSituation || item.observedConditions || item.keyTakeaway, 130)
+  const summary = item.shortSummary || excerpt(item.currentSituation || item.observedConditions || item.keyTakeaway, 140)
 
   function open() {
     if (onOpen) onOpen()
@@ -25,26 +17,18 @@ export default function WatchCard({
   }
 
   return (
-    <article
-      onClick={open}
-      className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group overflow-hidden flex flex-col"
-    >
-      <div className="h-44 bg-slate-100 overflow-hidden relative">
+    <article className="premium-card rounded-2xl overflow-hidden flex flex-col cursor-pointer group" onClick={open}>
+      <div className="h-44 relative overflow-hidden bg-slate-200">
         {coverImage ? (
-          <img
-            src={coverImage.dataUrl}
-            alt={item.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-          />
+          <img src={coverImage.dataUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0A1628, #1E3A5F)' }}>
+          <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0B1F3A, #1769AA)' }}>
             <HazardIcon hazard={item.hazard} size={36} />
           </div>
         )}
         {item.kind === 'video' && (
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(6,182,212,0.9)' }}>
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: '#16B8D4' }}>
               <Play size={18} className="text-white ml-0.5" fill="white" />
             </div>
           </div>
@@ -53,47 +37,22 @@ export default function WatchCard({
           <KindBadge kind={item.kind} />
           <SeverityBadge severity={item.severity} size="sm" />
         </div>
-        {item.featured && (
-          <div className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full text-white" style={{ background: '#06B6D4' }}>
-            Today
-          </div>
-        )}
       </div>
-
       <div className="p-4 flex-1 flex flex-col">
-        <div className="flex items-center gap-2 mb-2">
-          <HazardIcon hazard={item.hazard} size={13} showLabel />
+        <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">
+          {item.hazard} {item.infrastructureTypes[0] ? `· ${item.infrastructureTypes[0]}` : ''}
         </div>
-        <h3 className="text-sm font-bold text-slate-800 leading-tight mb-2 group-hover:text-blue-600 transition-colors">
-          {item.title}
-        </h3>
-        {item.issueType && (
-          <div className="text-[11px] text-slate-500 font-medium mb-2">{item.issueType}</div>
-        )}
+        <h3 className="text-sm font-bold text-navy leading-tight mb-2 group-hover:text-[#1769AA]">{item.title}</h3>
         {summary && <p className="text-xs text-slate-500 leading-relaxed mb-3 flex-1">{summary}</p>}
-
-        <div className="space-y-1.5 text-xs text-slate-400">
-          <div className="flex items-center gap-1.5">
-            <Calendar size={11} />
-            {dateStr || 'Undated'}
-          </div>
-          <div className="flex items-center gap-1.5">
-            <MapPin size={11} />
-            <span className="truncate">{location}</span>
-          </div>
-          {item.infrastructureTypes.length > 0 && (
-            <div className="flex items-center gap-1.5">
-              <Building2 size={11} />
-              <span className="truncate">{item.infrastructureTypes.join(', ')}</span>
-            </div>
-          )}
+        <div className="grid grid-cols-2 gap-y-1.5 text-[11px] text-slate-500 mb-4">
+          <span className="flex items-center gap-1"><Calendar size={11} />{formatDate(item.publishedAt || item.createdAt)}</span>
+          <span className="flex items-center gap-1 truncate"><MapPin size={11} />{item.district || item.province || 'Pakistan'}</span>
+          <span className="truncate">{item.province || '—'}</span>
+          <span className="flex items-center gap-1 truncate"><Building2 size={11} />{item.infrastructureTypes.join(', ') || '—'}</span>
         </div>
-      </div>
-
-      <div className="px-4 pb-4">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 group-hover:gap-2.5 transition-all">
-          Open details <ArrowRight size={12} />
-        </div>
+        <button type="button" className="btn-3d btn-3d-primary w-full py-2.5 rounded-xl text-xs flex items-center justify-center gap-2">
+          View details <ArrowRight size={13} />
+        </button>
       </div>
     </article>
   )

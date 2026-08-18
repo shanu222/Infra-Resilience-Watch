@@ -1,14 +1,19 @@
 import { useState } from 'react'
 import { NavLink, useNavigate, Link } from 'react-router-dom'
 import {
-  LayoutDashboard, FileText, Library, LogOut, Shield, Menu, X, ChevronRight, Globe,
+  LayoutDashboard, FileText, Library, LogOut, Shield, Menu, X, ChevronRight, Globe, Plus, Settings, AlertTriangle, Play, Wrench,
 } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 
 const NAV = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/admin/advisories', icon: FileText, label: 'Content' },
-  { to: '/admin/library', icon: Library, label: 'Content Library' },
+  { to: '/admin/advisories/new?kind=advisory', icon: Plus, label: 'Create Advisory' },
+  { to: '/admin/advisories', icon: FileText, label: 'Content Library' },
+  { to: '/admin/advisories?kind=issue', icon: AlertTriangle, label: 'Issues' },
+  { to: '/admin/advisories?kind=video', icon: Play, label: 'Videos' },
+  { to: '/admin/advisories?kind=solution', icon: Wrench, label: 'Solutions' },
+  { to: '/admin/library', icon: Library, label: 'Reusable Notes' },
+  { to: '/admin/settings', icon: Settings, label: 'Document Settings' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

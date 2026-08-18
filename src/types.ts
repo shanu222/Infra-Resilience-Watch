@@ -43,6 +43,24 @@ export type IssueType =
   | 'Recovery Recommendation'
   | 'Build Back Better'
 
+export type DocumentTheme =
+  | 'blue-engineering'
+  | 'green-resilience'
+  | 'red-alert'
+  | 'orange-recovery'
+  | 'navy-government'
+  | 'clean-professional'
+
+export type BackgroundTemplate =
+  | 'ndma-blue'
+  | 'engineering-grid'
+  | 'resilience-blue'
+  | 'infra-technical'
+  | 'disaster-alert'
+  | 'clean-government'
+  | 'green-resilience'
+  | 'custom'
+
 export interface AdvisoryImage {
   id: string
   dataUrl: string
@@ -51,14 +69,28 @@ export interface AdvisoryImage {
   order: number
 }
 
+export interface AppSettings {
+  orgLogo: string
+  wingLogo: string
+  advisoryLogo: string
+  defaultBackgroundTemplate: BackgroundTemplate
+  defaultCustomBackground: string
+  defaultTheme: DocumentTheme
+}
+
 export interface Advisory {
   id: string
   kind: ContentKind
   issueType: IssueType | ''
   shortSummary: string
   videoUrl: string
+  videoTitle: string
+  videoDescription: string
+  videoThumbnail: string
+  videoDuration: string
   featured: boolean
   title: string
+  advisoryNumber: string
   type: AdvisoryType
   hazard: HazardType
   severity: Severity
@@ -67,6 +99,7 @@ export interface Advisory {
   specificLocation: string
   infrastructureTypes: string[]
   currentSituation: string
+  identifiedProblem: string
   observedConditions: string
   affectedInfrastructure: string[]
   weatherCondition: string
@@ -88,6 +121,11 @@ export interface Advisory {
   images: AdvisoryImage[]
   references: string
   keyTakeaway: string
+  documentTheme: DocumentTheme
+  backgroundTemplate: BackgroundTemplate
+  customBackground: string
+  orgLogo: string
+  wingLogo: string
   status: Status
   version: number
   createdAt: string

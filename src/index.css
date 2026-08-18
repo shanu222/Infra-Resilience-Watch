@@ -2,135 +2,142 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-navy: #0A1628;
-  --color-navy-800: #0F2040;
-  --color-navy-700: #162B52;
-  --color-eng-blue: #1E3A5F;
-  --color-eng-blue-light: #2A4F7F;
-  --color-primary: #1D4ED8;
-  --color-primary-light: #2563EB;
-  --color-cyan: #06B6D4;
-  --color-cyan-light: #22D3EE;
-  --color-success: #059669;
-  --color-amber: #D97706;
-  --color-amber-light: #F59E0B;
+  --color-navy: #0B1F3A;
+  --color-navy-800: #12304F;
+  --color-navy-700: #1A3D63;
+  --color-eng-blue: #1769AA;
+  --color-eng-blue-light: #1E7BC4;
+  --color-primary: #1769AA;
+  --color-primary-light: #1E7BC4;
+  --color-cyan: #16B8D4;
+  --color-cyan-light: #3CCBE3;
+  --color-success: #168A5B;
+  --color-amber: #F59E0B;
+  --color-amber-light: #FBBF24;
   --color-orange: #EA580C;
-  --color-danger: #DC2626;
+  --color-danger: #D64545;
+  --color-canvas: #F4F7FB;
 
   --font-display: 'DM Serif Display', serif;
   --font-sans: 'IBM Plex Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 html {
   font-family: var(--font-sans);
-  background: #f8fafc;
+  background: #F4F7FB;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
+  color: #0B1F3A;
 }
 
-#root {
-  min-height: 100vh;
+#root { min-height: 100vh; }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(11, 31, 58, 0.22); border-radius: 3px; }
+
+.btn-3d {
+  position: relative;
+  border: 0;
+  color: white;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.28) inset, 0 8px 16px rgba(11, 31, 58, 0.22);
+  transform: translateY(0);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.btn-3d:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.32) inset, 0 12px 22px rgba(11, 31, 58, 0.28);
+}
+.btn-3d:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 3px 8px rgba(11, 31, 58, 0.2);
+}
+.btn-3d-primary { background: linear-gradient(180deg, #1E7BC4 0%, #1769AA 55%, #0F4F86 100%); }
+.btn-3d-cyan { background: linear-gradient(180deg, #3CCBE3 0%, #16B8D4 55%, #0E8FA8 100%); }
+.btn-3d-green { background: linear-gradient(180deg, #22A36E 0%, #168A5B 60%, #0F6B46 100%); }
+
+.glass-panel {
+  background: rgba(255,255,255,0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: 0 18px 40px rgba(11, 31, 58, 0.08);
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.premium-card {
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(23, 105, 170, 0.08);
+  box-shadow: 0 10px 28px rgba(11, 31, 58, 0.07);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.3);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.5);
+.premium-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 36px rgba(11, 31, 58, 0.12);
 }
 
-/* Print styles */
-@media print {
-  .no-print {
-    display: none !important;
-  }
-  .print-only {
-    display: block !important;
-  }
-  body {
-    background: white !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  @page {
-    margin: 15mm;
-    size: A4;
-  }
-  .advisory-doc {
-    page-break-inside: avoid;
-  }
-  .advisory-doc section {
-    page-break-inside: avoid;
-  }
-}
-
-.print-only {
-  display: none;
-}
-
-/* Advisory document styles */
-.advisory-doc {
-  font-family: var(--font-sans);
-}
-
-.advisory-doc h1, .advisory-doc h2, .advisory-doc h3 {
-  font-family: var(--font-display);
-}
-
-/* Rich text area */
-.rich-textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-/* Severity badges */
 .severity-normal { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
-.severity-advisory { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+.severity-advisory { background: #ecfdf5; color: #166534; border: 1px solid #86efac; }
 .severity-high { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
 .severity-critical { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
 
-/* Status badges */
 .status-draft { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
 .status-review { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
 .status-published { background: #dcfce7; color: #14532d; border: 1px solid #86efac; }
 .status-scheduled { background: #e0f2fe; color: #0c4a6e; border: 1px solid #7dd3fc; }
 .status-archived { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
 
-/* Glass card */
-.glass-card {
-  background: rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+.advisory-doc {
+  font-family: var(--font-sans);
+  position: relative;
+}
+.advisory-doc h1, .advisory-doc h2, .advisory-doc h3 {
+  font-family: var(--font-display);
+}
+.doc-section {
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
-/* Transitions */
-.transition-standard {
-  transition: all 0.2s ease;
+.print-only { display: none; }
+
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  html, body, #root {
+    background: white !important;
+    height: auto !important;
+  }
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  @page {
+    size: A4;
+    margin: 14mm 12mm 18mm 12mm;
+  }
+  .advisory-doc {
+    box-shadow: none !important;
+    border: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+  .doc-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .doc-header {
+    break-after: avoid;
+  }
 }
 
-/* Input styles */
-input, select, textarea {
-  outline: none;
-}
-
-input:focus, select:focus, textarea:focus {
-  ring: none;
-}
+input, select, textarea { outline: none; }
+input:focus, select:focus, textarea:focus { ring: none; }

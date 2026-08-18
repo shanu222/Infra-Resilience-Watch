@@ -32,10 +32,10 @@ export default function UserHome() {
 
   return (
     <div>
-      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0A1628 0%, #1E3A5F 55%, #1D4ED8 100%)' }}>
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: 'radial-gradient(circle at center, rgba(6,182,212,0.8) 1px, transparent 1px)',
-          backgroundSize: '28px 28px',
+      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0B1F3A 0%, #1769AA 58%, #16B8D4 140%)' }}>
+        <div className="absolute inset-0 opacity-[0.12]" style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.35) 1px, transparent 1px)',
+          backgroundSize: '32px 32px',
         }} />
         <div className="relative max-w-6xl mx-auto px-4 py-12 md:py-16">
           <div className="text-xs font-semibold tracking-[0.28em] text-cyan-300 uppercase mb-3">Daily infrastructure intelligence</div>
@@ -142,7 +142,7 @@ export default function UserHome() {
                     <Link
                       key={kind}
                       to={to}
-                      className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md hover:border-cyan-200 transition-all group"
+                      className="premium-card rounded-2xl p-5 group"
                     >
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: '#ecfeff' }}>
                         <Icon size={18} style={{ color: '#0E7490' }} />
@@ -164,7 +164,7 @@ export default function UserHome() {
 
 function EmptyState({ title, body }: { title: string; body: string }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-12 text-center">
+    <div className="glass-panel rounded-2xl p-12 text-center">
       <Shield size={36} className="mx-auto mb-3 text-slate-300" />
       <h3 className="text-lg font-bold text-slate-600 mb-2" style={{ fontFamily: 'DM Serif Display, serif' }}>{title}</h3>
       <p className="text-slate-400 text-sm max-w-md mx-auto">{body}</p>

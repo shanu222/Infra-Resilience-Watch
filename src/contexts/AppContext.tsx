@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
-import type { Advisory, ContentKind, LibraryItem } from '../types'
+import type { Advisory, AppSettings, ContentKind, LibraryItem } from '../types'
 import { DEFAULT_LIBRARY_ITEMS } from '../data/templates'
 import { sortNewest } from '../utils'
 
@@ -11,11 +11,13 @@ const AUTH_KEY = 'infraadvisory_auth'
 interface AppState {
   advisories: Advisory[]
   library: LibraryItem[]
+  settings: AppSettings
 }
 
 interface AppContextType {
   advisories: Advisory[]
   library: LibraryItem[]
+  settings: AppSettings
   isAuthenticated: boolean
   login: (username: string, password: string) => boolean
   logout: () => void
@@ -26,9 +28,12 @@ interface AppContextType {
   archiveAdvisory: (id: string) => void
   unpublishAdvisory: (id: string) => void
   duplicateAdvisory: (id: string) => Advisory
+  generateAdvisoryFromIssue: (id: string) => Advisory
+  nextAdvisoryNumber: () => string
   incrementViewCount: (id: string) => void
   addLibraryItem: (item: Omit<LibraryItem, 'id' | 'createdAt'>) => void
   deleteLibraryItem: (id: string) => void
+  updateSettings: (updates: Partial<AppSettings>) => void
   getPublishedAdvisories: () => Advisory[]
   getPublishedByKind: (kind: ContentKind) => Advisory[]
   getTodaysWatch: () => Advisory[]
@@ -75,6 +80,17 @@ function migrateAdvisory(raw: Partial<Advisory> & { id?: string }): Advisory {
     images: raw.images || [],
     references: raw.references || '',
     keyTakeaway: raw.keyTakeaway || '',
+    documentTheme: raw.documentTheme || 'blue-engineering',
+    backgroundTemplate: raw.backgroundTemplate || 'ndma-blue',
+    customBackground: raw.customBackground || '',
+    orgLogo: raw.orgLogo || '',
+    wingLogo: raw.wingLogo || '',
+    advisoryNumber: raw.advisoryNumber || '',
+    identifiedProblem: raw.identifiedProblem || '',
+    videoTitle: raw.videoTitle || '',
+    videoDescription: raw.videoDescription || '',
+    videoThumbnail: raw.videoThumbnail || '',
+    videoDuration: raw.videoDuration || '',
     status: raw.status || 'Draft',
     version: raw.version || 1,
     createdAt: raw.createdAt || now,
@@ -86,11 +102,20 @@ function migrateAdvisory(raw: Partial<Advisory> & { id?: string }): Advisory {
   }
 }
 
+const EMPTY_SETTINGS: AppSettings = {
+  orgLogo: '',
+  wingLogo: '',
+  advisoryLogo: '',
+  defaultBackgroundTemplate: 'ndma-blue',
+  defaultCustomBackground: '',
+  defaultTheme: 'blue-engineering',
+}
+
 function loadState(): AppState {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
-      const parsed = JSON.parse(stored) as { advisories?: Partial<Advisory>[]; library?: LibraryItem[] }
+      const parsed = JSON.parse(stored) as { advisories?: Partial<Advisory>[]; library?: LibraryItem[]; settings?: Partial<AppSettings> }
       return {
         advisories: (parsed.advisories || []).map(migrateAdvisory),
         library: parsed.library?.length
@@ -100,6 +125,7 @@ function loadState(): AppState {
               id: `lib_${i}`,
               createdAt: new Date().toISOString(),
             })),
+        settings: { ...EMPTY_SETTINGS, ...(parsed.settings || {}) },
       }
     }
   } catch {}
@@ -110,6 +136,7 @@ function loadState(): AppState {
       id: `lib_${i}`,
       createdAt: new Date().toISOString(),
     })),
+    settings: EMPTY_SETTINGS,
   }
 }
 
@@ -262,11 +289,51 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return sortNewest(getPublishedAdvisories()).slice(0, 12)
   }
 
+  function nextAdvisoryNumber(): string {
+    const year = new Date().getFullYear()
+    const prefix = `IRW-${year}-`
+    const seq = state.advisories
+      .map(a => a.advisoryNumber)
+      .filter(n => n.startsWith(prefix))
+      .map(n => parseInt(n.replace(prefix, ''), 10))
+      .filter(n => Number.isFinite(n))
+    const next = (seq.length ? Math.max(...seq) : 0) + 1
+    return `${prefix}${String(next).padStart(3, '0')}`
+  }
+
+  function generateAdvisoryFromIssue(id: string): Advisory {
+    const original = state.advisories.find(a => a.id === id)
+    if (!original) throw new Error('Item not found')
+    const now = new Date().toISOString()
+    const copy = migrateAdvisory({
+      ...original,
+      id: `adv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      kind: 'advisory',
+      type: 'Infrastructure Advisory',
+      title: original.title,
+      advisoryNumber: nextAdvisoryNumber(),
+      status: 'Draft',
+      createdAt: now,
+      updatedAt: now,
+      publishedAt: null,
+      featured: false,
+      version: 1,
+      viewCount: 0,
+    })
+    setState(s => ({ ...s, advisories: [copy, ...s.advisories] }))
+    return copy
+  }
+
+  function updateSettings(updates: Partial<AppSettings>) {
+    setState(s => ({ ...s, settings: { ...s.settings, ...updates } }))
+  }
+
   return (
     <AppContext.Provider
       value={{
         advisories: state.advisories,
         library: state.library,
+        settings: state.settings,
         isAuthenticated,
         login,
         logout,
@@ -277,9 +344,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         archiveAdvisory,
         unpublishAdvisory,
         duplicateAdvisory,
+        generateAdvisoryFromIssue,
+        nextAdvisoryNumber,
         incrementViewCount,
         addLibraryItem,
         deleteLibraryItem,
+        updateSettings,
         getPublishedAdvisories,
         getPublishedByKind,
         getTodaysWatch,

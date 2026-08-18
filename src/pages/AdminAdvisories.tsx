@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Eye, Edit3, Copy, Trash2, Archive, Globe, EyeOff, ChevronDown } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Plus, Search, Eye, Edit3, Copy, Trash2, Archive, Globe, EyeOff, ChevronDown, FileOutput } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import AdminLayout from '../components/AdminLayout'
 import SeverityBadge from '../components/SeverityBadge'
@@ -10,14 +10,20 @@ import KindBadge from '../components/KindBadge'
 import { CONTENT_KINDS } from '../data/constants'
 
 export default function AdminAdvisories() {
-  const { advisories, deleteAdvisory, publishAdvisory, archiveAdvisory, unpublishAdvisory, duplicateAdvisory } = useApp()
+  const { advisories, deleteAdvisory, publishAdvisory, archiveAdvisory, unpublishAdvisory, duplicateAdvisory, generateAdvisoryFromIssue } = useApp()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+  const kindFromUrl = params.get('kind') as ContentKind | null
 
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<Status | 'All'>('All')
   const [filterHazard, setFilterHazard] = useState<HazardType | 'All'>('All')
-  const [filterKind, setFilterKind] = useState<ContentKind | 'All'>('All')
+  const [filterKind, setFilterKind] = useState<ContentKind | 'All'>(kindFromUrl || 'All')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+
+  useEffect(() => {
+    setFilterKind(kindFromUrl || 'All')
+  }, [kindFromUrl])
 
   const filtered = advisories.filter(a => {
     const matchSearch = !search || a.title.toLowerCase().includes(search.toLowerCase()) || a.hazard.toLowerCase().includes(search.toLowerCase()) || (a.province + a.district).toLowerCase().includes(search.toLowerCase())
@@ -213,6 +219,18 @@ export default function AdminAdvisories() {
                           >
                             <Copy size={14} />
                           </button>
+                          {a.kind === 'issue' && (
+                            <button
+                              title="Generate Advisory"
+                              onClick={() => {
+                                const adv = generateAdvisoryFromIssue(a.id)
+                                navigate(`/admin/advisories/${adv.id}/edit`)
+                              }}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-700 hover:bg-cyan-50 transition-all"
+                            >
+                              <FileOutput size={14} />
+                            </button>
+                          )}
                           {a.status === 'Published' ? (
                             <button
                               title="Unpublish"

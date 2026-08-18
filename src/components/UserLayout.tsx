@@ -18,8 +18,8 @@ export default function UserLayout() {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: '#f8fafc' }}>
-      <header className="sticky top-0 z-30 border-b border-white/10" style={{ background: 'linear-gradient(135deg, #0A1628 0%, #0F2040 100%)' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#F4F7FB' }}>
+      <header className="sticky top-0 z-30" style={{ background: 'linear-gradient(135deg, #0B1F3A 0%, #12385F 100%)', boxShadow: '0 10px 30px rgba(11,31,58,0.18)' }}>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
           <Link to="/" className="flex items-center gap-3 min-w-0">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0" style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.3)' }}>

@@ -26,7 +26,7 @@ export default function FilterBar({
   }
 
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-xl border border-slate-100">
+    <div className="glass-panel rounded-2xl p-5">
       <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
         <Filter size={12} /> Explore Infrastructure Intelligence
       </div>
