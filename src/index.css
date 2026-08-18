@@ -886,37 +886,126 @@ input, select, textarea { outline: none; }
 .print-only { display: none; }
 
 @media print {
-  .no-print,.portal-bg,.portal-overlay,.portal-bg-photo { display: none !important; }
-  .portal-shell,.portal-content { background: white !important; min-height: auto !important; }
-  html,body,#root { background: white !important; height: auto !important; }
+  .no-print,
+  .portal-bg,
+  .portal-overlay,
+  .portal-bg-photo,
+  .portal-scifi-grid::before,
+  .portal-scifi-grid::after {
+    display: none !important;
+  }
+
+  html,
+  body,
+  #root,
+  .portal-shell,
+  .portal-content,
+  main,
+  .min-h-screen {
+    background: white !important;
+    min-height: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
   .print-only { display: block !important; }
-  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  @page { size: A4; margin: 10mm; }
-  .advisory-preview-frame { overflow: visible !important; box-shadow: none !important; border: 0 !important; }
-  .advisory-preview-inner { min-width: 0 !important; width: 100% !important; }
-  .advisory-doc { box-shadow: none !important; border: 0 !important; max-width: none !important; width: 100% !important; }
-  .doc-section { break-inside: avoid; page-break-inside: avoid; }
-  .doc-header { break-after: avoid; }
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  /* Detail page wrappers — remove portal padding so document fills the page */
+  body.printing-advisory-active .max-w-5xl,
+  body.printing-advisory-active .max-w-4xl {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .advisory-preview-frame {
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  .advisory-preview-inner {
+    min-width: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .advisory-doc {
+    box-shadow: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    min-width: 0 !important;
+  }
+
+  .advisory-doc .relative.min-h-full {
+    min-height: auto !important;
+  }
+
+  .advisory-doc img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .doc-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 1rem !important;
+  }
+
+  .doc-header {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
   .doc-bg-layer,
   .doc-content-layer,
   .doc-section,
   header.doc-header,
-  footer {
+  .advisory-doc footer {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
   .doc-video-embed,
   .doc-video-block iframe {
     display: none !important;
   }
+
   .doc-video-fallback {
     display: block !important;
   }
+
   a[href]::after,
   a[href]::before {
     content: none !important;
   }
-  .printing-advisory-doc {
+
+  .printing-advisory-doc,
+  body.printing-advisory-active {
     margin: 0;
     padding: 0;
     background: white;

@@ -141,48 +141,35 @@ export function sanitizeDocText(text: string): string {
     .trim()
 }
 
-/** Print only the advisory document (avoids browser footer showing the page URL). */
-export function printAdvisoryDocument(rootSelector = '.advisory-doc', title = 'Infrastructure Advisory') {
-  const el = document.querySelector(rootSelector)
-  if (!el) {
-    window.print()
-    return
+/**
+ * Print / save as PDF using the live publish-view DOM so layout, colors,
+ * and typography match the on-screen document (iframe cloning dropped Tailwind).
+ */
+export function printAdvisoryDocument(_rootSelector = '.advisory-preview-frame', title = 'Infrastructure Advisory') {
+  const prevTitle = document.title
+  const safeTitle = title.replace(/[<>]/g, '').trim() || 'Infrastructure Advisory'
+  document.title = safeTitle
+  document.body.classList.add('printing-advisory-active')
+
+  const cleanup = () => {
+    document.body.classList.remove('printing-advisory-active')
+    document.title = prevTitle
   }
 
-  const iframe = document.createElement('iframe')
-  iframe.setAttribute('aria-hidden', 'true')
-  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'
-  document.body.appendChild(iframe)
+  window.addEventListener('afterprint', cleanup, { once: true })
+  const fallbackTimer = window.setTimeout(cleanup, 15000)
+  window.addEventListener(
+    'afterprint',
+    () => window.clearTimeout(fallbackTimer),
+    { once: true },
+  )
 
-  const frame = iframe.contentWindow
-  const doc = iframe.contentDocument
-  if (!frame || !doc) {
-    document.body.removeChild(iframe)
-    window.print()
-    return
-  }
-
-  doc.open()
-  doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>')
-  doc.write(title.replace(/</g, '&lt;'))
-  doc.write('</title>')
-  document.querySelectorAll('style, link[rel="stylesheet"]').forEach(node => {
-    doc.head.appendChild(node.cloneNode(true))
+  // Let print class apply before the browser snapshots layout.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      window.print()
+    })
   })
-  doc.write('</head><body class="printing-advisory-doc"></body></html>')
-  doc.close()
-
-  doc.body.appendChild(el.cloneNode(true))
-  doc.body.classList.add('printing-advisory-doc')
-
-  const runPrint = () => {
-    frame.focus()
-    frame.print()
-    setTimeout(() => {
-      if (iframe.parentNode) document.body.removeChild(iframe)
-    }, 1000)
-  }
-  setTimeout(runPrint, 300)
 }
 
 export function kindToSection(kind: ContentKind): string {

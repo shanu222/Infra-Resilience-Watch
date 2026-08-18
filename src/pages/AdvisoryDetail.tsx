@@ -42,7 +42,7 @@ export default function AdvisoryDetail() {
   }
 
   function handlePrint() {
-    printAdvisoryDocument('.advisory-doc', advisory!.title)
+    printAdvisoryDocument('.advisory-preview-frame', advisory!.title)
   }
 
   function handleShare() {
