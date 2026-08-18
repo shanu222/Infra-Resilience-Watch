@@ -9,11 +9,11 @@ import { EMPTY_FILTERS, filterContent, hasActiveFilters, sortNewest } from '../u
 import type { ContentFilters, ContentKind } from '../types'
 
 const EXPLORE: { kind: ContentKind; to: string; icon: typeof FileText }[] = [
-  { kind: 'issue', to: '/user/issues', icon: AlertTriangle },
-  { kind: 'advisory', to: '/user/advisories', icon: FileText },
-  { kind: 'solution', to: '/user/solutions', icon: Wrench },
-  { kind: 'video', to: '/user/videos', icon: Play },
-  { kind: 'case-study', to: '/user/case-studies', icon: BookOpen },
+  { kind: 'issue', to: '/issues', icon: AlertTriangle },
+  { kind: 'advisory', to: '/advisories', icon: FileText },
+  { kind: 'solution', to: '/solutions', icon: Wrench },
+  { kind: 'video', to: '/videos', icon: Play },
+  { kind: 'case-study', to: '/case-studies', icon: BookOpen },
 ]
 
 export default function UserHome() {
@@ -95,7 +95,7 @@ export default function UserHome() {
                     Today{"'"}s Watch
                   </h2>
                 </div>
-                <Link to="/user/watch" className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                <Link to="/watch" className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
                   View all <ArrowRight size={14} />
                 </Link>
               </div>
@@ -117,7 +117,7 @@ export default function UserHome() {
                   {published.flatMap(item => item.images.map(img => ({ img, item }))).slice(0, 8).map(({ img, item }) => (
                     <Link
                       key={img.id}
-                      to={`/user/content/${item.id}`}
+                      to={`/content/${item.id}`}
                       className="relative h-36 rounded-xl overflow-hidden group bg-slate-100"
                     >
                       <img src={img.dataUrl} alt={img.caption || item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />

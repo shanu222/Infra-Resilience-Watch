@@ -67,7 +67,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
           <Link
-            to="/user"
+            to="/"
             className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-sm transition-all hover:bg-white/5 mb-1"
           >
             <Globe size={17} />

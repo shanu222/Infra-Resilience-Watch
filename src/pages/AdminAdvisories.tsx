@@ -194,7 +194,7 @@ export default function AdminAdvisories() {
                         <div className="flex items-center gap-1 justify-end">
                           <button
                             title="Preview"
-                            onClick={() => navigate(`/user/content/${a.id}`)}
+                            onClick={() => navigate(`/content/${a.id}`)}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
                           >
                             <Eye size={14} />

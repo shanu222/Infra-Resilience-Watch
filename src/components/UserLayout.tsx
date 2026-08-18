@@ -4,14 +4,14 @@ import { Shield, Menu, X } from 'lucide-react'
 import { BRAND } from '../data/constants'
 
 const NAV = [
-  { to: '/user', label: 'Home', end: true },
-  { to: '/user/watch', label: "Today's Watch" },
-  { to: '/user/issues', label: 'Issues' },
-  { to: '/user/advisories', label: 'Advisories' },
-  { to: '/user/solutions', label: 'Solutions' },
-  { to: '/user/videos', label: 'Videos' },
-  { to: '/user/case-studies', label: 'Case Studies' },
-  { to: '/user/about', label: 'About' },
+  { to: '/', label: 'Home', end: true },
+  { to: '/watch', label: "Today's Watch" },
+  { to: '/issues', label: 'Issues' },
+  { to: '/advisories', label: 'Advisories' },
+  { to: '/solutions', label: 'Solutions' },
+  { to: '/videos', label: 'Videos' },
+  { to: '/case-studies', label: 'Case Studies' },
+  { to: '/about', label: 'About' },
 ]
 
 export default function UserLayout() {
@@ -21,7 +21,7 @@ export default function UserLayout() {
     <div className="min-h-screen flex flex-col" style={{ background: '#f8fafc' }}>
       <header className="sticky top-0 z-30 border-b border-white/10" style={{ background: 'linear-gradient(135deg, #0A1628 0%, #0F2040 100%)' }}>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
-          <Link to="/user" className="flex items-center gap-3 min-w-0">
+          <Link to="/" className="flex items-center gap-3 min-w-0">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0" style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.3)' }}>
               <Shield size={20} style={{ color: '#06B6D4' }} />
             </div>
@@ -84,14 +84,10 @@ export default function UserLayout() {
       </main>
 
       <footer className="border-t border-slate-200 py-8 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-2">
             <Shield size={16} style={{ color: '#06B6D4' }} />
             <span className="text-sm text-slate-500">{BRAND.shortName} · {BRAND.description}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link to="/" className="text-xs text-slate-400 hover:text-slate-600 transition-colors">Portal Access</Link>
-            <Link to="/admin" className="text-xs text-slate-400 hover:text-slate-600 transition-colors">Admin Portal</Link>
           </div>
         </div>
       </footer>

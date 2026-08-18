@@ -4,14 +4,14 @@ Daily infrastructure intelligence, risks, issues and resilient solutions for Pak
 
 **Observe • Assess • Advise • Build Resilience**
 
-## Live links after Vercel deploy
+## Two separate links
 
-Vercel gives you one project URL. The two working portals are:
+After Vercel deploy, share these two URLs:
 
-- **User Portal:** `https://YOUR-PROJECT.vercel.app/user`
-- **Admin Portal:** `https://YOUR-PROJECT.vercel.app/admin`
+- **User Portal (public only):** `https://YOUR-PROJECT.vercel.app/`
+- **Admin Portal (login only):** `https://YOUR-PROJECT.vercel.app/admin`
 
-Landing / access screen: `https://YOUR-PROJECT.vercel.app/`
+The user link never shows admin controls. The admin link never shows the public portal.
 
 Admin login: `admin` / `Admin@2026`
 
@@ -23,8 +23,6 @@ Admin login: `admin` / `Admin@2026`
 4. Output directory: `dist`
 5. Click **Deploy**
 
-Do not change the root directory. After deploy, open `/user` and `/admin` on the Vercel domain.
-
 ## Local development
 
 ```bash
@@ -32,4 +30,5 @@ npm install
 npm run dev
 ```
 
-Then open http://localhost:8443/user and http://localhost:8443/admin
+- User: http://localhost:8443/
+- Admin: http://localhost:8443/admin

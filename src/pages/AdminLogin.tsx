@@ -137,13 +137,6 @@ export default function AdminLogin() {
         <p className="text-center text-xs text-slate-500 mt-6">
           Authorized personnel only. Create, publish and manage infrastructure intelligence.
         </p>
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="block mx-auto mt-3 text-xs text-slate-500 hover:text-cyan-300 transition-colors"
-        >
-          Back to portal access
-        </button>
       </div>
     </div>
   )

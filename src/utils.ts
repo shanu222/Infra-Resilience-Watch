@@ -94,7 +94,7 @@ export function relatedItems(all: Advisory[], current: Advisory, limit = 3): Adv
 }
 
 export function userPathFor(item: Pick<Advisory, 'id' | 'kind'>): string {
-  return `/user/content/${item.id}`
+  return `/content/${item.id}`
 }
 
 export function kindToSection(kind: ContentKind): string {

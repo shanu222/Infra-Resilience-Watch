@@ -24,7 +24,7 @@ export default function AdvisoryDetail() {
     }
   }, [advisory?.id])
 
-  const inUserPortal = location.pathname.startsWith('/user')
+  const inUserPortal = !location.pathname.startsWith('/admin')
 
   if (!advisory) {
     return (
@@ -33,7 +33,7 @@ export default function AdvisoryDetail() {
           <Shield size={48} className="mx-auto mb-4 text-slate-300" />
           <h1 className="text-xl font-bold text-slate-600 mb-2">Content Not Found</h1>
           <p className="text-slate-400 text-sm mb-6">This item may have expired, been archived, or the link may be incorrect.</p>
-          <button type="button" onClick={() => navigate('/user')} className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold" style={{ background: '#1D4ED8' }}>
+          <button type="button" onClick={() => navigate('/')} className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold" style={{ background: '#1D4ED8' }}>
             Back to User Portal
           </button>
         </div>
@@ -60,8 +60,7 @@ export default function AdvisoryDetail() {
 
   function goBack() {
     if (advisory.status !== 'Published') navigate('/admin/advisories')
-    else if (inUserPortal) navigate('/user')
-    else navigate('/user')
+    else navigate('/')
   }
 
   return (
