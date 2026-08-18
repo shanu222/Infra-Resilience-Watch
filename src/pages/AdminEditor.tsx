@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { Save, Globe, Eye, ChevronLeft, X, Plus, Trash2, Star, Upload, BookOpen, Check } from 'lucide-react'
+import { Save, Globe, Eye, ChevronLeft, X, Plus, Trash2, Star, Upload, BookOpen, Check, Play } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import AdminLayout from '../components/AdminLayout'
 import AdvisoryDocument from '../components/AdvisoryDocument'
@@ -11,7 +11,7 @@ import { HAZARD_TEMPLATES } from '../data/templates'
 import { HAZARDS, ADVISORY_TYPES, SEVERITIES, INFRA_TYPES, ISSUE_TYPES, CONTENT_KINDS, KIND_LABEL } from '../data/constants'
 import { BACKGROUND_TEMPLATES, DOCUMENT_THEMES } from '../data/documentDesign'
 import type { Advisory, AdvisoryType, ContentKind, HazardType, IssueType, Severity, AdvisoryImage, DocumentTheme } from '../types'
-import { userPathFor } from '../utils'
+import { getVideoThumbnailUrl, userPathFor } from '../utils'
 
 const AFFECTED_INFRA = INFRA_TYPES
 
@@ -227,6 +227,8 @@ export default function AdminEditor() {
   }
 
   const districts = getDistricts(form.province)
+
+  const footageThumbnail = getVideoThumbnailUrl(form.videoUrl || '', form.videoThumbnail)
 
   const previewAdvisory: Advisory = {
     ...form,
@@ -679,30 +681,49 @@ export default function AdminEditor() {
           {/* MEDIA */}
           {tab === 'media' && (
             <div>
-              <FieldGroup title="Video">
-                <Field label="Video URL (YouTube, Vimeo or direct link)">
+              <FieldGroup title="Damage & Event Footage">
+                <Field label="Video URL (footage of the damage or event)">
                   <input type="url" value={form.videoUrl || ''} onChange={e => set('videoUrl', e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className={INPUT_CLS} style={{ outline: 'none' }} />
+                  <p className="mt-1.5 text-xs text-slate-500">
+                    Paste the link only. The still frame below is shown in the published advisory and in the PDF.
+                  </p>
                 </Field>
-                <Field label="Video Title">
-                  <input type="text" value={form.videoTitle || ''} onChange={e => set('videoTitle', e.target.value)} className={INPUT_CLS} style={{ outline: 'none' }} />
-                </Field>
-                <Field label="Video Description">
-                  <textarea value={form.videoDescription || ''} onChange={e => set('videoDescription', e.target.value)} className={TEXTAREA_CLS} rows={2} style={{ outline: 'none' }} />
-                </Field>
-                <Field label="Thumbnail">
-                  <input ref={thumbRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
-                    const reader = new FileReader()
-                    reader.onload = ev => set('videoThumbnail', ev.target?.result as string)
-                    reader.readAsDataURL(file)
-                  }} />
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => thumbRef.current?.click()} className="px-3 py-2 rounded-xl border text-sm">Upload thumbnail</button>
-                    {form.videoThumbnail && <button type="button" onClick={() => set('videoThumbnail', '')} className="px-3 py-2 rounded-xl border text-sm text-red-600">Remove</button>}
+                {footageThumbnail ? (
+                  <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-900 max-w-sm">
+                    <img src={footageThumbnail} alt="Footage still frame" className="w-full aspect-video object-cover block" />
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-white/80" style={{ background: '#7357D9' }}>
+                        <Play size={18} className="text-white ml-0.5" fill="white" />
+                      </span>
+                    </span>
+                    {form.videoThumbnail && (
+                      <button
+                        type="button"
+                        onClick={() => set('videoThumbnail', '')}
+                        className="absolute top-2 right-2 px-2.5 py-1 rounded-lg bg-white/90 text-xs font-semibold text-red-600"
+                      >
+                        Remove
+                      </button>
+                    )}
                   </div>
-                  {form.videoThumbnail && <img src={form.videoThumbnail} alt="" className="mt-2 h-24 object-cover rounded-lg" />}
-                </Field>
+                ) : (
+                  /* Only hosts without a public still frame need a manual upload. */
+                  <Field label="Still frame (needed for this link)">
+                    <input ref={thumbRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const reader = new FileReader()
+                      reader.onload = ev => set('videoThumbnail', ev.target?.result as string)
+                      reader.readAsDataURL(file)
+                    }} />
+                    <button type="button" onClick={() => thumbRef.current?.click()} className="px-3 py-2 rounded-xl border text-sm">
+                      Upload still frame
+                    </button>
+                    <p className="mt-1.5 text-xs text-slate-500">
+                      YouTube links pick this up automatically.
+                    </p>
+                  </Field>
+                )}
               </FieldGroup>
               <FieldGroup title="Photographs">
                 <div

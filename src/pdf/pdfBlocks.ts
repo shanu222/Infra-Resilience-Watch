@@ -631,65 +631,72 @@ export function dualListBlocks(
  * Video briefing card with clickable link
  * ------------------------------------------------------------------ */
 
+/**
+ * Footage block: the still frame of the recorded damage or event plus a link out
+ * to the source. A PDF cannot play video, so the frame carries a play marker and
+ * the whole thumbnail is clickable.
+ */
 export function videoBlocks(
   pdf: jsPDF,
-  video: { title: string; description: string; url: string },
+  video: { url: string; thumbnail: LoadedImage | null },
   width: number,
   colorHex: string,
 ): Block[] {
   const color = hexToRgb(colorHex)
-  const title = cleanText(video.title)
-  const description = cleanText(video.description)
   const url = video.url.trim()
+  if (!url && !video.thumbnail) return []
 
-  const titleLines = title ? wrapText(pdf, title, width - 22, TYPE.body, 'bold') : []
-  const descLines = description ? wrapText(pdf, description, width - 22, TYPE.small) : []
-  const ctaHeight = url ? 8.6 : 0
+  const blocks: Block[] = []
+  const frameWidth = Math.min(width, 82)
+  const frameHeight = frameWidth / 1.78
 
-  const bodyHeight =
-    titleLines.length * lineHeight(TYPE.body, 1.35)
-    + descLines.length * lineHeight(TYPE.small, 1.38)
-    + (descLines.length ? 1.4 : 0)
-  const height = Math.max(bodyHeight + ctaHeight + 7.4, 20)
+  if (video.thumbnail) {
+    const thumbnail = video.thumbnail
+    blocks.push({
+      height: frameHeight + 2.6,
+      draw: (x, y) => {
+        drawFramedImage(pdf, thumbnail, x, y, frameWidth, frameHeight)
 
-  return [{
-    height: height + 2,
-    draw: (x, y) => {
-      panel(pdf, x, y, width, height, tintRgb(color, 0.93), tintRgb(color, 0.62))
+        const cx = x + frameWidth / 2
+        const cy = y + frameHeight / 2
+        setFill(pdf, [255, 255, 255])
+        pdf.circle(cx, cy, 6.4, 'F')
+        setFill(pdf, color)
+        pdf.circle(cx, cy, 5.6, 'F')
+        setFill(pdf, [255, 255, 255])
+        pdf.triangle(cx - 1.9, cy - 2.8, cx - 1.9, cy + 2.8, cx + 2.8, cy, 'F')
 
-      // Play badge
-      setFill(pdf, color)
-      pdf.circle(x + 9, y + 9.4, 5.2, 'F')
-      setFill(pdf, [255, 255, 255])
-      pdf.triangle(x + 7.4, y + 6.9, x + 7.4, y + 11.9, x + 11.6, y + 9.4, 'F')
+        if (url) pdf.link(x, y, frameWidth, frameHeight, { url })
+      },
+    })
+  }
 
-      let cursor = y + 3.4
-      if (titleLines.length) {
-        drawLines(pdf, titleLines, x + 18, cursor, TYPE.body, INK, 'bold')
-        cursor += titleLines.length * lineHeight(TYPE.body, 1.35) + 0.8
-      }
-      if (descLines.length) {
-        drawLines(pdf, descLines, x + 18, cursor, TYPE.small, MUTED)
-        cursor += descLines.length * lineHeight(TYPE.small, 1.38) + 1
-      }
+  if (url) {
+    const label = 'WATCH THE FOOTAGE'
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(TYPE.label)
+    const ctaWidth = Math.min(width, trackedTextWidth(pdf, label, 0.7) + 15)
 
-      if (url) {
-        const label = 'WATCH VIDEO BRIEFING'
+    blocks.push({
+      height: 9.4,
+      draw: (x, y) => {
+        setFill(pdf, color)
+        pdf.roundedRect(x, y, ctaWidth, 6.6, 1.5, 1.5, 'F')
+
         pdf.setFont('helvetica', 'bold')
         pdf.setFontSize(TYPE.label)
-        const ctaWidth = trackedTextWidth(pdf, label, 0.7) + 12
-        const ctaY = y + height - 7.6
-        setFill(pdf, color)
-        pdf.roundedRect(x + 18, ctaY, ctaWidth, 6, 1.4, 1.4, 'F')
         setText(pdf, [255, 255, 255])
-        drawTrackedText(pdf, label, x + 22, ctaY + 4, 0.7)
+        drawTrackedText(pdf, label, x + 4.5, y + 4.4, 0.7)
         pdf.setFont('helvetica', 'bold')
-        pdf.setFontSize(TYPE.label + 1)
-        pdf.text('>', x + 18 + ctaWidth - 5, ctaY + 4.1)
-        pdf.link(x + 18, ctaY, ctaWidth, 6, { url })
-      }
-    },
-  }]
+        pdf.setFontSize(TYPE.label + 1.4)
+        pdf.text('>', x + ctaWidth - 5.4, y + 4.5)
+
+        pdf.link(x, y, ctaWidth, 6.6, { url })
+      },
+    })
+  }
+
+  return blocks
 }
 
 /* ------------------------------------------------------------------ *
@@ -813,6 +820,40 @@ export function bannerBlocks(
  * ------------------------------------------------------------------ */
 
 const IMAGE_RADIUS = 1.4
+
+/**
+ * Circular logo badge: a white plate with the mark contained inside it. Contain
+ * (rather than crop) keeps wordmarks and seals whole, and a box of 1.4r always
+ * fits within the circle.
+ */
+export function drawCircularLogo(
+  pdf: jsPDF,
+  image: LoadedImage,
+  cx: number,
+  cy: number,
+  radius: number,
+  ring: RGB,
+) {
+  setFill(pdf, [255, 255, 255])
+  pdf.circle(cx, cy, radius, 'F')
+
+  const box = radius * 1.4
+  const size = fitContain(image, box, box)
+  pdf.addImage(
+    image.dataUrl,
+    image.format,
+    cx - size.width / 2,
+    cy - size.height / 2,
+    size.width,
+    size.height,
+    undefined,
+    'FAST',
+  )
+
+  setStroke(pdf, ring)
+  pdf.setLineWidth(0.5)
+  pdf.circle(cx, cy, radius, 'S')
+}
 
 /** Cover dimensions: fills the frame completely, preserving aspect ratio. */
 function fitCover(image: { width: number; height: number }, w: number, h: number) {

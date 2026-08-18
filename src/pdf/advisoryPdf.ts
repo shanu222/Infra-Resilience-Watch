@@ -9,8 +9,14 @@ import {
   hazardColor,
   themeOf,
 } from '../data/documentDesign'
-import { formatDateLong, locationLabel, sanitizeDocText } from '../utils'
-import { fitContain, loadImageForPdf, type LoadedImage } from './pdfImages'
+import {
+  formatDateLong,
+  getVideoThumbnailUrl,
+  isExternalVideoLink,
+  locationLabel,
+  sanitizeDocText,
+} from '../utils'
+import { loadImageForPdf, type LoadedImage } from './pdfImages'
 import {
   CONTENT_WIDTH,
   MARGIN,
@@ -38,6 +44,7 @@ import {
   briefBlocks,
   calloutBlocks,
   contactBlocks,
+  drawCircularLogo,
   dualListBlocks,
   imageBlocks,
   imageGridBlocks,
@@ -189,16 +196,16 @@ function coverBlocks(
   const titleLines = pdf.splitTextToSize(titleText, width - padX * 2 - 2) as string[]
   const titleLh = lineHeight(TYPE.title, 1.16)
 
-  const logoPlates = logos.map(logo => ({ logo, size: fitContain(logo, 30, 13) }))
-  const logoRow = logoPlates.length ? 17 : 0
+  // Circular logo badges lead the masthead: the issuing body first, at the top left.
+  const badges = logos.map((logo, i) => ({ logo, radius: i === 0 ? 7.6 : 6.2 }))
+  const badgeGap = 2.8
+  const badgeRowWidth = badges.reduce((total, badge, i) => total + badge.radius * 2 + (i ? badgeGap : 0), 0)
 
-  let cursor = 8
-  const eyebrowY = cursor
-  cursor += 5.4
-  const typeY = cursor
-  cursor += 6.2
-  const logoY = cursor
-  cursor += logoRow
+  const mastheadTop = 6.5
+  const mastheadHeight = Math.max(15.2, badges.length ? Math.max(...badges.map(b => b.radius * 2)) : 0)
+  const textX = padX + (badges.length ? badgeRowWidth + 4.6 : 0)
+
+  let cursor = mastheadTop + mastheadHeight + 4
   const ruleY = cursor
   cursor += 4.6
   const badgeY = cursor
@@ -214,15 +221,23 @@ function coverBlocks(
       setFill(pdf, palette.band)
       pdf.rect(x, y, width, 1.7, 'F')
 
+      const mastheadMid = y + mastheadTop + mastheadHeight / 2
+
+      let badgeX = x + padX
+      for (const badge of badges) {
+        drawCircularLogo(pdf, badge.logo, badgeX + badge.radius, mastheadMid, badge.radius, palette.band)
+        badgeX += badge.radius * 2 + badgeGap
+      }
+
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(TYPE.label + 0.4)
       setText(pdf, palette.band)
-      drawTrackedText(pdf, BRAND.name, x + padX, y + eyebrowY, 0.9)
+      drawTrackedText(pdf, BRAND.name, x + textX, mastheadMid - 1.6, 0.9)
 
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(11.5)
       setText(pdf, [255, 255, 255])
-      pdf.text(cleanText(advisory.type) || 'Infrastructure Advisory', x + padX, y + typeY + 2.4)
+      pdf.text(cleanText(advisory.type) || 'Infrastructure Advisory', x + textX, mastheadMid + 4.4)
 
       // Reference block, right aligned
       const refs = [
@@ -230,7 +245,7 @@ function coverBlocks(
         { label: 'Version', value: `${advisory.version}.0` },
       ]
       refs.forEach((ref, i) => {
-        const ry = y + eyebrowY + i * 6.4
+        const ry = y + mastheadTop + 3.4 + i * 7
         pdf.setFont('helvetica', 'bold')
         pdf.setFontSize(TYPE.label - 0.4)
         setText(pdf, tintRgb(palette.band, 0.25))
@@ -242,22 +257,6 @@ function coverBlocks(
         pdf.setFontSize(TYPE.small)
         setText(pdf, [255, 255, 255])
         pdf.text(ref.value, x + width - padX - pdf.getTextWidth(ref.value), ry + 3.6)
-      })
-
-      logoPlates.forEach((plate, i) => {
-        const px = x + padX + i * 34
-        setFill(pdf, [255, 255, 255])
-        pdf.roundedRect(px, y + logoY, plate.size.width + 3, plate.size.height + 3, 1.4, 1.4, 'F')
-        pdf.addImage(
-          plate.logo.dataUrl,
-          plate.logo.format,
-          px + 1.5,
-          y + logoY + 1.5,
-          plate.size.width,
-          plate.size.height,
-          undefined,
-          'FAST',
-        )
       })
 
       setFill(pdf, palette.band)
@@ -621,12 +620,6 @@ class DocumentFlow {
  * Document composition
  * ------------------------------------------------------------------ */
 
-function isExternalVideoLink(url: string): boolean {
-  const clean = (url || '').trim()
-  if (!/^https?:\/\//i.test(clean)) return false
-  return !/vercel\.app|localhost|\/content\//i.test(clean)
-}
-
 async function buildDocument(
   advisory: Advisory,
   settings: AppSettings,
@@ -660,11 +653,12 @@ async function buildDocument(
   const coverSource = advisory.images.find(i => i.isCover) || advisory.images[0]
   const gallerySource = advisory.images.filter(i => i !== coverSource)
 
-  const [orgLogo, wingLogo, advisoryLogo, coverImage] = await Promise.all([
+  const [orgLogo, wingLogo, advisoryLogo, coverImage, videoThumbnail] = await Promise.all([
     loadImageForPdf(advisory.orgLogo || settings.orgLogo, { preferPng: true }),
     loadImageForPdf(advisory.wingLogo || settings.wingLogo, { preferPng: true }),
     loadImageForPdf(settings.advisoryLogo, { preferPng: true }),
     loadImageForPdf(coverSource?.dataUrl),
+    loadImageForPdf(getVideoThumbnailUrl(advisory.videoUrl, advisory.videoThumbnail)),
   ])
 
   const gallery = (
@@ -712,8 +706,6 @@ async function buildDocument(
     { label: 'Other', value: advisory.otherCondition },
   ]
 
-  const videoTitle = cleanText(advisory.videoTitle)
-  const videoDescription = sanitizeDocText(advisory.videoDescription)
   const videoLink = isExternalVideoLink(advisory.videoUrl) ? advisory.videoUrl.trim() : ''
 
   const specs: SectionSpec[] = [
@@ -802,13 +794,10 @@ async function buildDocument(
       build: w => imageGridBlocks(pdf, gallery, w),
     },
     {
-      title: 'Related Video Briefing',
+      title: 'Damage & Event Footage',
       color: SECTION_COLOR.video,
       solo: true,
-      build: w =>
-        videoTitle || videoDescription || videoLink
-          ? videoBlocks(pdf, { title: videoTitle, description: videoDescription, url: videoLink }, w, SECTION_COLOR.video)
-          : [],
+      build: w => videoBlocks(pdf, { url: videoLink, thumbnail: videoThumbnail }, w, SECTION_COLOR.video),
     },
     {
       title: 'Public Guidance',

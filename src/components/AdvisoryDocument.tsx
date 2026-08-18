@@ -1,7 +1,13 @@
 import { AlertTriangle, Check, Play, Shield, X } from 'lucide-react'
 import type { Advisory } from '../types'
 import HazardIcon from './HazardIcon'
-import { formatDateLong, getVideoEmbedUrl, locationLabel, sanitizeDocText } from '../utils'
+import {
+  formatDateLong,
+  getVideoThumbnailUrl,
+  isExternalVideoLink,
+  locationLabel,
+  sanitizeDocText,
+} from '../utils'
 import { BRAND, normalizeSeverity } from '../data/constants'
 import {
   ACTION_PHASE_COLOR,
@@ -145,11 +151,8 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
   const number = advisory.advisoryNumber || `IRW-${new Date(advisory.createdAt).getFullYear()}-DRAFT`
   const logos = [advisory.orgLogo || settings.orgLogo, advisory.wingLogo || settings.wingLogo, settings.advisoryLogo]
     .filter(Boolean) as string[]
-  const embed = getVideoEmbedUrl(advisory.videoUrl)
-  const videoLink = /^https?:\/\//i.test(advisory.videoUrl || '')
-    && !/vercel\.app|localhost|\/content\//i.test(advisory.videoUrl)
-    ? advisory.videoUrl.trim()
-    : ''
+  const videoLink = isExternalVideoLink(advisory.videoUrl) ? advisory.videoUrl.trim() : ''
+  const videoThumbnail = getVideoThumbnailUrl(advisory.videoUrl, advisory.videoThumbnail)
 
   const summary = sanitizeDocText(advisory.shortSummary)
   const situation = sanitizeDocText(advisory.currentSituation)
@@ -220,12 +223,28 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
           >
             <div className="absolute inset-x-0 top-0 h-1.5" style={{ background: theme.band }} />
             <div className="relative px-4 sm:px-6 md:px-8 pt-5 sm:pt-6 pb-5 sm:pb-6">
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-                <div className="min-w-0">
-                  <div className="text-[9.5px] sm:text-[10px] font-bold uppercase tracking-[0.28em]" style={{ color: theme.band }}>
-                    {BRAND.name}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  {/* Issuing body first, as a circular badge at the top left */}
+                  {logos.map((logo, i) => (
+                    <span
+                      key={i}
+                      className="shrink-0 rounded-full bg-white flex items-center justify-center overflow-hidden"
+                      style={{
+                        width: i === 0 ? 54 : 44,
+                        height: i === 0 ? 54 : 44,
+                        border: `2px solid ${theme.band}`,
+                      }}
+                    >
+                      <img src={logo} alt="" className="w-[72%] h-[72%] object-contain" />
+                    </span>
+                  ))}
+                  <div className="min-w-0">
+                    <div className="text-[9.5px] sm:text-[10px] font-bold uppercase tracking-[0.28em]" style={{ color: theme.band }}>
+                      {BRAND.name}
+                    </div>
+                    <div className="text-base sm:text-lg font-bold mt-0.5">{advisory.type || 'Infrastructure Advisory'}</div>
                   </div>
-                  <div className="text-base sm:text-lg font-bold mt-1">{advisory.type || 'Infrastructure Advisory'}</div>
                 </div>
                 <div className="text-left sm:text-right shrink-0">
                   <div className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: `${theme.band}cc` }}>Advisory No</div>
@@ -234,16 +253,6 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
                   <div className="text-[13px] font-bold">{advisory.version}.0</div>
                 </div>
               </div>
-
-              {logos.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2.5 mb-4">
-                  {logos.map((logo, i) => (
-                    <span key={i} className="bg-white rounded-md p-1.5 flex items-center">
-                      <img src={logo} alt="" className="h-8 sm:h-9 w-auto object-contain" />
-                    </span>
-                  ))}
-                </div>
-              )}
 
               <div className="h-[3px] rounded-full mb-4" style={{ background: theme.band }} />
 
@@ -502,46 +511,43 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
               </Section>
             )}
 
-            {advisory.videoUrl && (
-              <Section n={num()} title="Related Video Briefing" color={SECTION_COLOR.video}>
-                <div
-                  className="doc-video-block rounded-lg overflow-hidden"
-                  style={{ background: `${SECTION_COLOR.video}0f`, border: `1px solid ${SECTION_COLOR.video}3d` }}
-                >
-                  {embed && (
-                    <div className="aspect-video doc-video-embed bg-slate-900">
-                      <iframe src={embed} title={advisory.videoTitle || advisory.title} className="w-full h-full" allowFullScreen />
-                    </div>
-                  )}
-                  <div className="px-4 py-3.5 flex gap-3.5">
-                    {!embed && (
-                      <span
-                        className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
-                        style={{ background: SECTION_COLOR.video }}
-                      >
-                        <Play size={16} className="text-white ml-0.5" fill="white" />
-                      </span>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      {advisory.videoTitle && (
-                        <div className="text-sm font-bold text-slate-800 break-words">{advisory.videoTitle}</div>
-                      )}
-                      {advisory.videoDescription && (
-                        <p className="text-[12.5px] text-slate-600 mt-1 break-words">{sanitizeDocText(advisory.videoDescription)}</p>
-                      )}
-                      {videoLink && (
-                        <a
-                          href={videoLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 mt-2.5 text-[9.5px] font-bold uppercase tracking-[0.16em] text-white px-3 py-2 rounded"
+            {(videoLink || videoThumbnail) && (
+              <Section n={num()} title="Damage & Event Footage" color={SECTION_COLOR.video}>
+                <div className="doc-video-block max-w-md">
+                  {videoThumbnail && (
+                    <a
+                      href={videoLink || undefined}
+                      target={videoLink ? '_blank' : undefined}
+                      rel="noreferrer"
+                      className="block relative rounded-lg overflow-hidden border border-slate-200 bg-slate-900"
+                    >
+                      <img
+                        src={videoThumbnail}
+                        alt="Still frame of the recorded damage or event"
+                        className="w-full object-cover block aspect-video"
+                        loading="lazy"
+                      />
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <span
+                          className="w-14 h-14 rounded-full flex items-center justify-center border-[3px] border-white shadow-lg"
                           style={{ background: SECTION_COLOR.video }}
                         >
-                          Watch Video Briefing <span aria-hidden>→</span>
-                        </a>
-                      )}
-                    </div>
-                  </div>
+                          <Play size={22} className="text-white ml-1" fill="white" />
+                        </span>
+                      </span>
+                    </a>
+                  )}
+                  {videoLink && (
+                    <a
+                      href={videoLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 mt-2.5 text-[9.5px] font-bold uppercase tracking-[0.16em] text-white px-3.5 py-2 rounded"
+                      style={{ background: SECTION_COLOR.video }}
+                    >
+                      Watch the Footage <span aria-hidden>→</span>
+                    </a>
+                  )}
                 </div>
               </Section>
             )}

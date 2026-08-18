@@ -106,6 +106,26 @@ export function getVideoEmbedUrl(url: string): string | null {
   return null
 }
 
+/**
+ * Still frame for a video URL. YouTube exposes thumbnails on a predictable path,
+ * so an administrator only has to paste the link. Other hosts fall back to the
+ * thumbnail uploaded with the advisory.
+ */
+export function getVideoThumbnailUrl(url: string, uploaded?: string): string {
+  if (uploaded) return uploaded
+  if (!url) return ''
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([\w-]{6,})/)
+  if (yt) return `https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`
+  return ''
+}
+
+/** True when the link points outside the portal and is safe to publish as a source. */
+export function isExternalVideoLink(url: string | null | undefined): boolean {
+  const clean = (url || '').trim()
+  if (!/^https?:\/\//i.test(clean)) return false
+  return !/vercel\.app|localhost|\/content\//i.test(clean)
+}
+
 export function relatedItems(all: Advisory[], current: Advisory, limit = 3): Advisory[] {
   return all
     .filter(a => a.id !== current.id)
