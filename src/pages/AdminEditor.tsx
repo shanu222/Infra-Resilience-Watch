@@ -166,7 +166,7 @@ export default function AdminEditor() {
     }))
   }
 
-  function handleSave(publish = false) {
+  async function handleSave(publish = false) {
     if (publish && !form.title.trim()) {
       setTab('basic')
       alert('Please enter a title before publishing to the User Portal.')
@@ -174,14 +174,18 @@ export default function AdminEditor() {
     }
     const data = { ...form }
     if (!data.advisoryNumber) data.advisoryNumber = nextAdvisoryNumber()
-    const saved = saveContent(data, { id: existing?.id, publish })
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
-    if (publish) {
-      navigate(userPathFor(saved))
-      return
+    try {
+      const saved = await saveContent(data, { id: existing?.id, publish })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+      if (publish) {
+        navigate(userPathFor(saved))
+        return
+      }
+      if (isNew) navigate(`/admin/advisories/${saved.id}/edit`)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Could not save to the cloud database. Check your Supabase setup.')
     }
-    if (isNew) navigate(`/admin/advisories/${saved.id}/edit`)
   }
 
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {

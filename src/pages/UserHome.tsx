@@ -32,7 +32,7 @@ export default function UserHome() {
 
   return (
     <div>
-      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(11,31,58,0.55) 0%, rgba(23,105,170,0.38) 70%)' }}>
+      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(11,31,58,0.28) 0%, rgba(23,105,170,0.18) 70%)' }}>
         <div className="absolute inset-0 opacity-[0.08]" style={{
           backgroundImage: 'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)',
           backgroundSize: '32px 32px',

@@ -144,3 +144,7 @@
 *.stl                filter=lfs diff=lfs merge=lfs -text
 *.nc                 filter=lfs diff=lfs merge=lfs -text
 *.mat                filter=lfs diff=lfs merge=lfs -text
+
+# Keep portal backgrounds as normal Git files so Vercel/Figma serve real PNGs, not LFS pointers.
+public/backgrounds/*.png -filter -diff -merge binary
+src/assets/backgrounds/*.png -filter -diff -merge binary

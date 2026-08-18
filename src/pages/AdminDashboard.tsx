@@ -8,7 +8,7 @@ import HazardIcon from '../components/HazardIcon'
 import type { HazardType } from '../types'
 
 export default function AdminDashboard() {
-  const { advisories } = useApp()
+  const { advisories, cloudEnabled, cloudError } = useApp()
   const navigate = useNavigate()
 
   const total = advisories.length
@@ -71,6 +71,20 @@ export default function AdminDashboard() {
             Create Content
           </button>
         </div>
+
+        {cloudError ? (
+          <div className="mb-6 glass-panel rounded-2xl p-4 text-sm text-red-800">
+            {cloudError}
+          </div>
+        ) : cloudEnabled ? (
+          <div className="mb-6 glass-panel rounded-2xl p-4 text-sm text-emerald-800">
+            Live database connected. Anything you Publish here appears on the User Portal for every visitor.
+          </div>
+        ) : (
+          <div className="mb-6 glass-panel rounded-2xl p-4 text-sm text-amber-800">
+            Cloud database is not connected. Published items are only visible in this browser. Add <code className="font-mono">VITE_SUPABASE_URL</code> and <code className="font-mono">VITE_SUPABASE_ANON_KEY</code> to show them to everyone. See README.
+          </div>
+        )}
 
         {/* Stats grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">

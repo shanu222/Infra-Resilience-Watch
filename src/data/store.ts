@@ -66,14 +66,37 @@ async function idbGet(): Promise<string | null> {
   return value
 }
 
-export function persistAppState(state: PersistedState) {
+function isNewer(next: PersistedState, prev: PersistedState) {
+  if ((next.rev || 0) !== (prev.rev || 0)) return (next.rev || 0) > (prev.rev || 0)
+  return (next.advisories?.length || 0) >= (prev.advisories?.length || 0)
+}
+
+export async function persistAppState(state: PersistedState) {
+  const existingRaw = await idbGet()
+  if (existingRaw) {
+    try {
+      const prev = JSON.parse(existingRaw) as PersistedState
+      if (!isNewer(state, prev)) return
+    } catch {}
+  }
+
   const json = JSON.stringify(state)
   try {
     localStorage.setItem(STORAGE_KEY, json)
   } catch {
-    // Quota can fail when images are large; IndexedDB still keeps the live copy.
+    try {
+      const slim = {
+        ...state,
+        advisories: state.advisories.map(a => ({
+          ...a,
+          images: a.images.map(img => ({ ...img, dataUrl: img.dataUrl.length > 120000 ? '' : img.dataUrl })),
+          customBackground: a.customBackground && a.customBackground.length > 120000 ? '' : a.customBackground,
+        })),
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(slim))
+    } catch {}
   }
-  void idbSet(json)
+  await idbSet(json)
   try {
     getChannel()?.postMessage(state)
   } catch {}
@@ -95,8 +118,24 @@ export async function readIndexedState(): Promise<string | null> {
   }
 }
 
+export function parsePersisted(raw: string | null): PersistedState | null {
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as PersistedState
+    if (!parsed || !Array.isArray(parsed.advisories)) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+export function pickLatestState(...raws: Array<string | null>): PersistedState | null {
+  const parsed = raws.map(parsePersisted).filter((s): s is PersistedState => Boolean(s))
+  if (!parsed.length) return null
+  return parsed.reduce((best, item) => (isNewer(item, best) ? item : best))
+}
+
 export function subscribeToRemoteState(onRemote: (state: PersistedState) => void): () => void {
-  const channel = getChannel()
   const onMessage = (event: MessageEvent) => {
     if (event.data && typeof event.data === 'object' && Array.isArray(event.data.advisories)) {
       onRemote(event.data as PersistedState)
@@ -104,15 +143,14 @@ export function subscribeToRemoteState(onRemote: (state: PersistedState) => void
   }
   const onStorage = (event: StorageEvent) => {
     if (event.key !== STORAGE_KEY || !event.newValue) return
-    try {
-      const parsed = JSON.parse(event.newValue) as PersistedState
-      if (parsed && Array.isArray(parsed.advisories)) onRemote(parsed)
-    } catch {}
+    const parsed = parsePersisted(event.newValue)
+    if (parsed) onRemote(parsed)
   }
-  channel?.addEventListener('message', onMessage)
+  const ch = getChannel()
+  ch?.addEventListener('message', onMessage)
   window.addEventListener('storage', onStorage)
   return () => {
-    channel?.removeEventListener('message', onMessage)
+    ch?.removeEventListener('message', onMessage)
     window.removeEventListener('storage', onStorage)
   }
 }

@@ -242,7 +242,11 @@ export default function AdminAdvisories() {
                           ) : a.status !== 'Archived' ? (
                             <button
                               title="Publish"
-                              onClick={() => publishAdvisory(a.id)}
+                              onClick={() => {
+                                void publishAdvisory(a.id).catch(err => {
+                                  alert(err instanceof Error ? err.message : 'Could not publish to the cloud database.')
+                                })
+                              }}
                               className="p-1.5 rounded-lg text-slate-400 hover:text-green-600 hover:bg-green-50 transition-all"
                             >
                               <Globe size={14} />

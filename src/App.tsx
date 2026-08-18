@@ -12,9 +12,18 @@ import AdminLibrary from './pages/AdminLibrary'
 import AdminSettings from './pages/AdminSettings'
 import AdvisoryDetail from './pages/AdvisoryDetail'
 
+function PortalLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-sm text-slate-200">Loading live portals…</p>
+    </div>
+  )
+}
+
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useApp()
+  const { isAuthenticated, ready } = useApp()
   const location = useLocation()
+  if (!ready) return <PortalLoading />
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />
   }

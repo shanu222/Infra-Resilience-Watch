@@ -1,11 +1,12 @@
+import userBg from '../assets/backgrounds/user-portal-background.png'
+import adminBg from '../assets/backgrounds/admin-portal-background.png'
+
 export default function PortalBackground({ variant }: { variant: 'user' | 'admin' }) {
-  const src = variant === 'user'
-    ? '/backgrounds/user-portal-background.png'
-    : '/backgrounds/admin-portal-background.png'
+  const src = variant === 'user' ? userBg : adminBg
 
   return (
     <div className={`portal-bg portal-bg-${variant} no-print`} aria-hidden="true">
-      <div className="portal-bg-image" style={{ backgroundImage: `url("${src}")` }} />
+      <img src={src} alt="" className="portal-bg-photo" />
       <div className="portal-overlay" />
     </div>
   )
