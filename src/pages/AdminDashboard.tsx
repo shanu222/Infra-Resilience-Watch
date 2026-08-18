@@ -51,15 +51,24 @@ export default function AdminDashboard() {
   const topProvinces = Object.entries(provinceCounts).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
   const STATS = [
-    { label: 'Advisories', value: advisories.filter(a => a.kind === 'advisory').length, icon: Newspaper, color: '#168DDB', bg: 'linear-gradient(135deg,#eff6ff,#dbeafe)', border: '#bfdbfe' },
-    { label: 'Published', value: published, icon: Globe, color: '#20B26B', bg: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', border: '#bbf7d0' },
-    { label: 'Drafts', value: drafts, icon: Clock, color: '#64748B', bg: 'linear-gradient(135deg,#f8fafc,#f1f5f9)', border: '#e2e8f0' },
-    { label: 'Issues', value: issues, icon: AlertTriangle, color: '#E5484D', bg: 'linear-gradient(135deg,#fff1f2,#ffe4e6)', border: '#fecdd3' },
-    { label: 'Videos', value: videos, icon: TrendingUp, color: '#7357D9', bg: 'linear-gradient(135deg,#faf5ff,#ede9fe)', border: '#ddd6fe' },
-    { label: 'Solutions', value: solutions, icon: Archive, color: '#10A99A', bg: 'linear-gradient(135deg,#f0fdfa,#ccfbf1)', border: '#99f6e4' },
-    { label: "Today's", value: todayCount, icon: BarChart3, color: '#12B8D6', bg: 'linear-gradient(135deg,#ecfeff,#cffafe)', border: '#a5f3fc' },
-    { label: 'Case Studies', value: cases, icon: BookOpen, color: '#F2A900', bg: 'linear-gradient(135deg,#fffbeb,#fef3c7)', border: '#fde68a' },
+    { label: 'Advisories', value: advisories.filter(a => a.kind === 'advisory').length, icon: Newspaper, color: '#168DDB', bg: 'linear-gradient(135deg,#eff6ff,#dbeafe)', border: '#bfdbfe', tint: 'stat-tint-blue' },
+    { label: 'Published', value: published, icon: Globe, color: '#20B26B', bg: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', border: '#bbf7d0', tint: 'stat-tint-green' },
+    { label: 'Drafts', value: drafts, icon: Clock, color: '#64748B', bg: 'linear-gradient(135deg,#f8fafc,#f1f5f9)', border: '#e2e8f0', tint: 'stat-tint-slate' },
+    { label: 'Issues', value: issues, icon: AlertTriangle, color: '#E5484D', bg: 'linear-gradient(135deg,#fff1f2,#ffe4e6)', border: '#fecdd3', tint: 'stat-tint-red' },
+    { label: 'Videos', value: videos, icon: TrendingUp, color: '#7357D9', bg: 'linear-gradient(135deg,#faf5ff,#ede9fe)', border: '#ddd6fe', tint: 'stat-tint-purple' },
+    { label: 'Solutions', value: solutions, icon: Archive, color: '#10A99A', bg: 'linear-gradient(135deg,#f0fdfa,#ccfbf1)', border: '#99f6e4', tint: 'stat-tint-teal' },
+    { label: "Today's", value: todayCount, icon: BarChart3, color: '#12B8D6', bg: 'linear-gradient(135deg,#ecfeff,#cffafe)', border: '#a5f3fc', tint: 'stat-tint-cyan' },
+    { label: 'Case Studies', value: cases, icon: BookOpen, color: '#F2A900', bg: 'linear-gradient(135deg,#fffbeb,#fef3c7)', border: '#fde68a', tint: 'stat-tint-amber' },
   ]
+
+  const KIND_TINTS: Record<string, { bg: string; border: string; color: string }> = {
+    issue: { bg: 'linear-gradient(135deg,#fff1f2,#ffe4e6)', border: 'rgba(229,72,77,0.35)', color: '#E5484D' },
+    advisory: { bg: 'linear-gradient(135deg,#eff6ff,#dbeafe)', border: 'rgba(22,141,219,0.35)', color: '#168DDB' },
+    solution: { bg: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', border: 'rgba(32,178,107,0.35)', color: '#20B26B' },
+    video: { bg: 'linear-gradient(135deg,#faf5ff,#ede9fe)', border: 'rgba(115,87,217,0.35)', color: '#7357D9' },
+    'case-study': { bg: 'linear-gradient(135deg,#fffbeb,#fef3c7)', border: 'rgba(242,169,0,0.35)', color: '#F2A900' },
+    observation: { bg: 'linear-gradient(135deg,#f0fdfa,#ccfbf1)', border: 'rgba(16,169,154,0.35)', color: '#10A99A' },
+  }
 
   return (
     <AdminLayout>
@@ -78,7 +87,7 @@ export default function AdminDashboard() {
           <button
             type="button"
             onClick={() => navigate('/admin/advisories/new?kind=advisory')}
-            className="btn-3d btn-3d-cyan flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm w-full sm:w-auto"
+            className="btn-3d btn-3d-cyan btn-3d-scifi flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm w-full sm:w-auto anim-fade-up"
           >
             <Plus size={17} /> Create Content
           </button>
@@ -106,21 +115,21 @@ export default function AdminDashboard() {
 
         {/* Stat cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-7">
-          {STATS.map(({ label, value, icon: Icon, color, bg, border }, idx) => (
-            <div key={label} className={`stat-card rounded-2xl p-4 anim-fade-up delay-${(idx + 1) * 50}`}>
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: bg, border: `1px solid ${border}` }}>
+          {STATS.map(({ label, value, icon: Icon, color, bg, border, tint }, idx) => (
+            <div key={label} className={`stat-card ${tint} rounded-2xl p-4 anim-fade-up delay-${(idx + 1) * 50}`}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3 shadow-sm" style={{ background: bg, border: `1px solid ${border}` }}>
                 <Icon size={17} style={{ color }} />
               </div>
-              <div className="text-2xl font-bold mb-0.5 anim-count" style={{ color: '#071A33' }}>{value}</div>
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{label}</div>
+              <div className={`text-2xl font-bold mb-0.5 anim-count ${value > 0 ? 'stat-value-glow' : ''}`} style={{ color: '#071A33' }}>{value}</div>
+              <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: color }}>{label}</div>
             </div>
           ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
           {/* Recent Content */}
-          <div className="lg:col-span-2 glass-panel rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(22,141,219,0.12)' }}>
+          <div className="lg:col-span-2 dash-panel dash-panel-blue rounded-2xl overflow-hidden anim-fade-up delay-100">
+            <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid rgba(22,141,219,0.18)' }}>
               <div className="flex items-center gap-2">
                 <FileText size={15} style={{ color: '#168DDB' }} />
                 <h2 className="font-bold text-slate-700 text-sm">Recent Content</h2>
@@ -128,8 +137,7 @@ export default function AdminDashboard() {
               <button
                 type="button"
                 onClick={() => navigate('/admin/advisories')}
-                className="text-xs font-semibold flex items-center gap-0.5 hover:gap-1 transition-all"
-                style={{ color: '#168DDB' }}
+                className="btn-3d-ghost flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs"
               >
                 View all <ChevronRight size={13} />
               </button>
@@ -151,7 +159,7 @@ export default function AdminDashboard() {
                   <div
                     key={a.id}
                     onClick={() => navigate(`/admin/advisories/${a.id}/edit`)}
-                    className="px-5 py-3.5 flex items-center gap-3 hover:bg-blue-50/50 cursor-pointer transition-colors group"
+                    className="px-5 py-3.5 flex items-center gap-3 hover:bg-blue-100/40 cursor-pointer transition-all group dash-row"
                   >
                     <HazardIcon hazard={a.hazard} size={14} />
                     <div className="flex-1 min-w-0">
@@ -174,8 +182,8 @@ export default function AdminDashboard() {
           </div>
 
           {/* Hazard breakdown */}
-          <div className="glass-panel rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: '1px solid rgba(22,141,219,0.12)' }}>
+          <div className="dash-panel dash-panel-cyan rounded-2xl overflow-hidden anim-fade-up delay-150">
+            <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: '1px solid rgba(18,184,214,0.18)' }}>
               <BarChart3 size={15} style={{ color: '#168DDB' }} />
               <h2 className="font-bold text-slate-700 text-sm">Content by Hazard</h2>
             </div>
@@ -210,8 +218,8 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Most viewed */}
-          <div className="glass-panel rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: '1px solid rgba(22,141,219,0.12)' }}>
+          <div className="dash-panel dash-panel-green rounded-2xl overflow-hidden anim-fade-up delay-100">
+            <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: '1px solid rgba(32,178,107,0.18)' }}>
               <Eye size={15} style={{ color: '#20B26B' }} />
               <h2 className="font-bold text-slate-700 text-sm">Most Viewed</h2>
             </div>
@@ -223,7 +231,7 @@ export default function AdminDashboard() {
                   <div
                     key={a.id}
                     onClick={() => navigate(`/admin/advisories/${a.id}/edit`)}
-                    className="px-5 py-3 flex items-center gap-3 hover:bg-green-50/40 cursor-pointer transition-colors"
+                    className="px-5 py-3 flex items-center gap-3 hover:bg-green-100/40 cursor-pointer transition-all dash-row"
                   >
                     <span className="text-xs font-mono font-bold w-5 text-center shrink-0" style={{ color: i === 0 ? '#F2A900' : '#CBD5E1' }}>
                       {i + 1}
@@ -242,8 +250,8 @@ export default function AdminDashboard() {
           </div>
 
           {/* Province breakdown */}
-          <div className="glass-panel rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: '1px solid rgba(22,141,219,0.12)' }}>
+          <div className="dash-panel dash-panel-teal rounded-2xl overflow-hidden anim-fade-up delay-150">
+            <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: '1px solid rgba(16,169,154,0.18)' }}>
               <BarChart3 size={15} style={{ color: '#10A99A' }} />
               <h2 className="font-bold text-slate-700 text-sm">Content by Province</h2>
             </div>
@@ -277,18 +285,25 @@ export default function AdminDashboard() {
         </div>
 
         {topKinds.length > 0 && (
-          <div className="mt-5 glass-panel rounded-2xl overflow-hidden">
-            <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: '1px solid rgba(22,141,219,0.12)' }}>
+          <div className="mt-5 dash-panel dash-panel-purple rounded-2xl overflow-hidden anim-fade-up delay-200">
+            <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: '1px solid rgba(115,87,217,0.18)' }}>
               <BarChart3 size={15} style={{ color: '#7357D9' }} />
               <h2 className="font-bold text-slate-700 text-sm">Content by Type</h2>
             </div>
             <div className="p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              {topKinds.map(([kind, count]) => (
-                <div key={kind} className="rounded-xl p-3 text-center" style={{ background: 'rgba(241,245,249,0.7)', border: '1px solid rgba(226,232,240,0.8)' }}>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">{kind.replace('-', ' ')}</div>
-                  <div className="text-xl font-bold text-slate-800">{count}</div>
-                </div>
-              ))}
+              {topKinds.map(([kind, count]) => {
+                const tint = KIND_TINTS[kind] || KIND_TINTS.advisory
+                return (
+                  <div
+                    key={kind}
+                    className="kind-mini-card"
+                    style={{ background: tint.bg, border: `1px solid ${tint.border}` }}
+                  >
+                    <div className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: tint.color }}>{kind.replace('-', ' ')}</div>
+                    <div className="text-xl font-bold" style={{ color: '#071A33' }}>{count}</div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

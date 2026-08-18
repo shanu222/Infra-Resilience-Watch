@@ -19,7 +19,7 @@ export default function UserLayout() {
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="portal-shell">
+    <div className="portal-shell portal-scifi-grid">
       <PortalBackground variant="user" />
       <div className="portal-content flex flex-col min-h-screen">
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-3 focus:py-2 focus:rounded-lg focus:bg-white focus:text-navy no-print">
@@ -44,11 +44,10 @@ export default function UserLayout() {
                   to={item.to}
                   end={item.end}
                   className={({ isActive }) =>
-                    `px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${
-                      isActive ? 'text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'
+                    `nav-scifi-link px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider ${
+                      isActive ? 'nav-scifi-active' : 'text-slate-300 hover:text-white'
                     }`
                   }
-                  style={({ isActive }) => isActive ? { background: 'rgba(22,184,212,0.18)', color: '#22D3EE' } : {}}
                 >
                   {item.label}
                 </NavLink>
@@ -76,9 +75,8 @@ export default function UserLayout() {
                   end={item.end}
                   onClick={() => setOpen(false)}
                   className={({ isActive }) =>
-                    `block px-3 py-2.5 rounded-lg text-sm font-medium ${isActive ? 'text-cyan-300' : 'text-slate-200'}`
+                    `nav-scifi-link block px-3 py-2.5 rounded-lg text-sm font-medium ${isActive ? 'nav-scifi-active' : 'text-slate-200'}`
                   }
-                  style={({ isActive }) => isActive ? { background: 'rgba(22,184,212,0.12)' } : {}}
                 >
                   {item.label}
                 </NavLink>

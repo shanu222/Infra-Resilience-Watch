@@ -41,7 +41,7 @@ export default function UserHome() {
   return (
     <div>
       {/* ── Hero section ── */}
-      <section className="hero-band relative overflow-hidden">
+      <section className="hero-band hero-band-scifi relative overflow-hidden">
         {/* Grid overlay */}
         <div
           className="absolute inset-0 opacity-[0.10] pointer-events-none"
@@ -125,8 +125,7 @@ export default function UserHome() {
                 </div>
                 <Link
                   to="/watch"
-                  className="text-sm font-semibold flex items-center gap-1 transition-all hover:gap-2"
-                  style={{ color: '#168DDB' }}
+                  className="btn-3d-ghost flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:gap-2"
                 >
                   View all <ArrowRight size={14} />
                 </Link>

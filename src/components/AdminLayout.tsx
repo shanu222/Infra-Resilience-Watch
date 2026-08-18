@@ -28,7 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="portal-shell">
+    <div className="portal-shell portal-scifi-grid">
       <PortalBackground variant="admin" />
       <div className="portal-content min-h-screen flex">
         <aside
@@ -56,11 +56,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 title={label}
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all md:justify-center lg:justify-start md:px-2 lg:px-4 ${
-                    isActive ? 'text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  `sidebar-scifi-link flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium md:justify-center lg:justify-start md:px-2 lg:px-4 ${
+                    isActive ? 'sidebar-scifi-active' : 'text-slate-300 hover:text-white'
                   }`
                 }
-                style={({ isActive }) => isActive ? { background: 'rgba(22,184,212,0.14)', color: '#16B8D4' } : {}}
               >
                 {({ isActive }) => (
                   <>
