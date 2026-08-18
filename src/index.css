@@ -495,9 +495,22 @@ body {
 .advisory-doc h1,.advisory-doc h2,.advisory-doc h3 { font-family: var(--font-display); }
 .doc-section { break-inside: avoid; page-break-inside: avoid; }
 
-.advisory-preview-frame { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.advisory-preview-inner { min-width: 0; }
-@media (max-width: 767px) { .advisory-preview-inner { min-width: 640px; } }
+.advisory-preview-frame {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  min-width: 0;
+}
+.advisory-preview-inner {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+.advisory-doc {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
 
 /* ============================================================
    FOCUS & ACCESSIBILITY

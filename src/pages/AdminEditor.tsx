@@ -684,14 +684,9 @@ export default function AdminEditor() {
                 <Field label="Video URL (YouTube, Vimeo or direct link)">
                   <input type="url" value={form.videoUrl || ''} onChange={e => set('videoUrl', e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className={INPUT_CLS} style={{ outline: 'none' }} />
                 </Field>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="Video Title">
-                    <input type="text" value={form.videoTitle || ''} onChange={e => set('videoTitle', e.target.value)} className={INPUT_CLS} style={{ outline: 'none' }} />
-                  </Field>
-                  <Field label="Duration">
-                    <input type="text" value={form.videoDuration || ''} onChange={e => set('videoDuration', e.target.value)} placeholder="e.g. 3:45" className={INPUT_CLS} style={{ outline: 'none' }} />
-                  </Field>
-                </div>
+                <Field label="Video Title">
+                  <input type="text" value={form.videoTitle || ''} onChange={e => set('videoTitle', e.target.value)} className={INPUT_CLS} style={{ outline: 'none' }} />
+                </Field>
                 <Field label="Video Description">
                   <textarea value={form.videoDescription || ''} onChange={e => set('videoDescription', e.target.value)} className={TEXTAREA_CLS} rows={2} style={{ outline: 'none' }} />
                 </Field>

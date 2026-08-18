@@ -66,24 +66,31 @@ export default function AdvisoryDetail() {
   return (
     <div className="min-h-screen">
       <div className={`no-print glass-toolbar ${inUserPortal ? '' : 'sticky top-0 z-20'}`}>
-        <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={goBack}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-slate-600 hover:bg-slate-100 text-sm transition-all"
-          >
-            <ArrowLeft size={14} />
-            Back
-          </button>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-slate-700 truncate hidden sm:block">{advisory.title}</div>
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3">
+          <div className="flex items-center gap-2 min-w-0 mb-2 sm:mb-0">
+            <button
+              type="button"
+              onClick={goBack}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-xl text-slate-600 hover:bg-slate-100 text-sm transition-all shrink-0"
+            >
+              <ArrowLeft size={14} />
+              Back
+            </button>
+            <div className="flex-1 min-w-0 hidden sm:block">
+              <div className="text-sm font-medium text-slate-700 truncate">{advisory.title}</div>
+            </div>
+            <div className="hidden sm:block shrink-0">
+              <SeverityBadge severity={advisory.severity} size="sm" />
+            </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
-            <SeverityBadge severity={advisory.severity} size="sm" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="sm:hidden shrink-0">
+              <SeverityBadge severity={advisory.severity} size="sm" />
+            </div>
             <button
               type="button"
               onClick={handleShare}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-all"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-all flex-1 sm:flex-none min-w-[4.5rem]"
             >
               <Share2 size={14} />
               <span className="hidden sm:inline">Share</span>
@@ -91,7 +98,7 @@ export default function AdvisoryDetail() {
             <button
               type="button"
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-all"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-all flex-1 sm:flex-none min-w-[4.5rem]"
             >
               <Printer size={14} />
               <span className="hidden sm:inline">Print</span>
@@ -99,7 +106,7 @@ export default function AdvisoryDetail() {
             <button
               type="button"
               onClick={handlePrint}
-              className="btn-3d btn-3d-primary flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm flex-1 sm:flex-none justify-center"
+              className="btn-3d btn-3d-primary flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm flex-1 sm:flex-none min-w-[4.5rem]"
             >
               <Download size={14} />
               <span className="hidden sm:inline">Download PDF</span>
@@ -118,8 +125,8 @@ export default function AdvisoryDetail() {
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        <div className="advisory-preview-frame rounded-2xl shadow-xl border border-slate-200">
+      <div className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-6 min-w-0">
+        <div className="advisory-preview-frame rounded-xl sm:rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
           <div className="advisory-preview-inner">
             <AdvisoryDocument advisory={advisory} />
           </div>

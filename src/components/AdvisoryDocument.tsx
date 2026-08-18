@@ -11,7 +11,7 @@ function DocSection({ n, title, color, children }: { n: string; title: string; c
     <section className="doc-section mb-7">
       <div className="flex items-center gap-3 mb-4 pb-2" style={{ borderBottom: `2px solid ${color}` }}>
         <span className="w-8 h-8 rounded-lg text-white text-xs font-bold flex items-center justify-center shrink-0" style={{ background: color }}>{n}</span>
-        <h2 className="text-sm font-bold uppercase tracking-[0.16em]" style={{ color, fontFamily: 'IBM Plex Sans, sans-serif' }}>{title}</h2>
+        <h2 className="text-xs sm:text-sm font-bold uppercase tracking-[0.12em] sm:tracking-[0.16em] break-words min-w-0" style={{ color, fontFamily: 'IBM Plex Sans, sans-serif' }}>{title}</h2>
       </div>
       {children}
     </section>
@@ -33,7 +33,7 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
   const bg = backgroundLayer(advisory.backgroundTemplate, advisory.customBackground)
 
   return (
-    <article className="advisory-doc bg-white max-w-4xl mx-auto overflow-hidden" style={{ fontFamily: 'IBM Plex Sans, sans-serif' }}>
+    <article className="advisory-doc bg-white w-full max-w-4xl mx-auto overflow-hidden min-w-0" style={{ fontFamily: 'IBM Plex Sans, sans-serif' }}>
       <div className="relative min-h-full">
         <div className="absolute inset-0 pointer-events-none" style={bg} />
         <div className="relative" style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.94) 210px, rgba(255,255,255,0.97) 100%)' }}>
@@ -42,9 +42,9 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
             <div className="absolute inset-0 opacity-15" style={{
               backgroundImage: 'repeating-linear-gradient(90deg, transparent 0 22px, rgba(255,255,255,0.18) 22px 23px)',
             }} />
-            <div className="relative px-8 pt-6 pb-5">
-              <div className="flex items-start justify-between gap-4 mb-5">
-                <div className="flex items-center gap-3">
+            <div className="relative px-4 sm:px-6 md:px-8 pt-5 sm:pt-6 pb-4 sm:pb-5">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-5">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
                   {orgLogo ? <img src={orgLogo} alt="Organization logo" className="h-12 w-auto object-contain bg-white/10 rounded-md p-1" /> : (
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}>
                       <Shield size={22} />
@@ -57,8 +57,8 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
                     <div className="text-sm font-semibold tracking-wide">{advisory.type || 'INFRASTRUCTURE ADVISORY'}</div>
                   </div>
                 </div>
-                <div className="text-right text-[11px] font-mono text-white/80">
-                  <div>Advisory No: {number}</div>
+                <div className="text-left sm:text-right text-[10px] sm:text-[11px] font-mono text-white/80 shrink-0">
+                  <div className="break-all sm:break-normal">Advisory No: {number}</div>
                   <div>v{advisory.version}.0</div>
                 </div>
               </div>
@@ -69,11 +69,11 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
                 <HazardIcon hazard={advisory.hazard} size={26} />
                 <div className="min-w-0">
                   <div className="text-[11px] font-bold uppercase tracking-[0.2em] mb-1" style={{ color: theme.band }}>{advisory.hazard}</div>
-                  <h1 className="text-2xl md:text-3xl font-bold leading-tight" style={{ fontFamily: 'DM Serif Display, serif' }}>{advisory.title || 'Untitled advisory'}</h1>
+                  <h1 className="text-xl sm:text-2xl md:text-3xl font-bold leading-tight break-words" style={{ fontFamily: 'DM Serif Display, serif' }}>{advisory.title || 'Untitled advisory'}</h1>
                 </div>
               </div>
 
-              <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
+              <div className="mt-4 sm:mt-5 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-[10px] sm:text-[11px]">
                 <Meta label="Date" value={dateStr} />
                 <Meta label="Location" value={advisory.specificLocation || location} />
                 <Meta label="District" value={advisory.district || '—'} />
@@ -81,7 +81,7 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
               </div>
             </div>
             {advisory.infrastructureTypes.length > 0 && (
-              <div className="px-8 py-3 flex flex-wrap gap-2" style={{ background: 'rgba(0,0,0,0.22)' }}>
+              <div className="px-4 sm:px-6 md:px-8 py-3 flex flex-wrap gap-2" style={{ background: 'rgba(0,0,0,0.22)' }}>
                 {advisory.infrastructureTypes.map(type => (
                   <span key={type} className="text-[10px] px-2.5 py-1 rounded font-semibold uppercase tracking-wider" style={{ background: 'rgba(255,255,255,0.12)', color: '#E0F7FA' }}>{type}</span>
                 ))}
@@ -91,14 +91,14 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
 
           {coverImage && (
             <figure className="w-full bg-slate-900">
-              <img src={coverImage.dataUrl} alt={coverImage.caption || advisory.title} className="w-full h-64 object-cover" />
+              <img src={coverImage.dataUrl} alt={coverImage.caption || advisory.title} className="w-full h-48 sm:h-56 md:h-64 object-cover" />
               {coverImage.caption && (
-                <figcaption className="px-8 py-2 text-xs italic text-slate-600 bg-white/90">FIGURE 01 · {coverImage.caption}</figcaption>
+                <figcaption className="px-4 sm:px-6 md:px-8 py-2 text-xs italic text-slate-600 bg-white/90 break-words">FIGURE 01 · {coverImage.caption}</figcaption>
               )}
             </figure>
           )}
 
-          <div className="px-8 py-8">
+          <div className="px-4 sm:px-6 md:px-8 py-6 sm:py-8">
             {advisory.shortSummary && (
               <DocSection n="00" title="Executive Brief" color={theme.accent}>
                 <p className="text-slate-700 text-sm leading-relaxed">{advisory.shortSummary}</p>
@@ -219,7 +219,7 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
 
             {otherImages.length > 0 && (
               <DocSection n="11" title="Visual Evidence" color={theme.ink}>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {otherImages.map((img, i) => (
                     <figure key={img.id} className="rounded-xl overflow-hidden bg-slate-100">
                       <img src={img.dataUrl} alt={img.caption || 'Field photograph'} className="w-full h-40 object-cover" />
@@ -249,11 +249,10 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
                       <Play size={16} /> Watch field video
                     </a>
                   )}
-                  {(advisory.videoTitle || advisory.videoDescription || advisory.videoDuration) && (
+                  {(advisory.videoTitle || advisory.videoDescription) && (
                     <div className="p-4 bg-white">
-                      {advisory.videoTitle && <div className="text-sm font-bold text-slate-800">{advisory.videoTitle}</div>}
-                      {advisory.videoDuration && <div className="text-[11px] text-slate-500 mt-0.5">Duration: {advisory.videoDuration}</div>}
-                      {advisory.videoDescription && <p className="text-xs text-slate-600 mt-2">{advisory.videoDescription}</p>}
+                      {advisory.videoTitle && <div className="text-sm font-bold text-slate-800 break-words">{advisory.videoTitle}</div>}
+                      {advisory.videoDescription && <p className="text-xs text-slate-600 mt-2 break-words">{advisory.videoDescription}</p>}
                     </div>
                   )}
                 </div>
@@ -326,9 +325,9 @@ export default function AdvisoryDocument({ advisory }: { advisory: Advisory; isP
 
 function Meta({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    <div className="min-w-0">
       <div className="uppercase tracking-widest text-white/60 mb-0.5">{label}</div>
-      <div className="font-semibold text-white">{value}</div>
+      <div className="font-semibold text-white break-words">{value}</div>
     </div>
   )
 }
