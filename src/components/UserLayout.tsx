@@ -3,7 +3,6 @@ import { NavLink, Outlet, Link } from 'react-router-dom'
 import { Shield, Menu, X } from 'lucide-react'
 import { BRAND } from '../data/constants'
 import PortalBackground from './PortalBackground'
-import { useApp } from '../contexts/AppContext'
 
 const NAV = [
   { to: '/', label: 'Home', end: true },
@@ -18,7 +17,6 @@ const NAV = [
 
 export default function UserLayout() {
   const [open, setOpen] = useState(false)
-  const { ready, cloudEnabled, cloudError } = useApp()
 
   return (
     <div className="portal-shell">
@@ -90,18 +88,7 @@ export default function UserLayout() {
         </header>
 
         <main id="main-content" className="flex-1 min-w-0">
-          {cloudError && (
-            <div className="max-w-7xl mx-auto px-4 pt-4 no-print">
-              <div className="glass-panel-error rounded-xl px-4 py-3 text-sm">
-                {cloudError}
-              </div>
-            </div>
-          )}
-          {cloudEnabled && !ready ? (
-            <div className="max-w-7xl mx-auto px-4 py-16 text-center text-slate-200 text-sm">Loading published content…</div>
-          ) : (
-            <Outlet />
-          )}
+          <Outlet />
         </main>
 
         <footer className="no-print mt-auto py-8">
