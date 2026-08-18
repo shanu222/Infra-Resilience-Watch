@@ -1,4 +1,4 @@
-export type Severity = 'Normal' | 'Advisory' | 'High' | 'Critical'
+export type Severity = 'Normal' | 'Low' | 'Moderate' | 'High' | 'Critical'
 export type Status = 'Draft' | 'Review' | 'Published' | 'Scheduled' | 'Archived'
 export type HazardType =
   | 'Flood'

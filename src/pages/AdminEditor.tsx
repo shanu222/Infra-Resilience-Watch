@@ -27,7 +27,7 @@ function blankAdvisory(kind: ContentKind = 'advisory'): Omit<Advisory, 'id' | 'c
   return {
     kind, issueType: '', shortSummary: '', videoUrl: '', videoTitle: '', videoDescription: '', videoThumbnail: '', videoDuration: '',
     featured: false, advisoryNumber: '', identifiedProblem: '',
-    title: '', type: 'Infrastructure Advisory', hazard: 'Flood', severity: 'Advisory',
+    title: '', type: 'Infrastructure Advisory', hazard: 'Flood', severity: 'Moderate',
     province: '', district: '', specificLocation: '', infrastructureTypes: [],
     currentSituation: '', observedConditions: '', affectedInfrastructure: [],
     weatherCondition: '', rainfallCondition: '', riverCondition: '', groundCondition: '', visibility: '', otherCondition: '',
@@ -404,7 +404,8 @@ export default function AdminEditor() {
                     {SEVERITIES.map(s => {
                       const colors: Record<Severity, { bg: string; text: string; border: string }> = {
                         Normal: { bg: '#dbeafe', text: '#1e40af', border: '#3b82f6' },
-                        Advisory: { bg: '#fef3c7', text: '#92400e', border: '#f59e0b' },
+                        Low: { bg: '#dcfce7', text: '#166534', border: '#22c55e' },
+                        Moderate: { bg: '#fef3c7', text: '#92400e', border: '#f59e0b' },
                         High: { bg: '#ffedd5', text: '#9a3412', border: '#f97316' },
                         Critical: { bg: '#fee2e2', text: '#991b1b', border: '#ef4444' },
                       }

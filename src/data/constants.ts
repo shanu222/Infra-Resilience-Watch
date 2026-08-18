@@ -15,7 +15,14 @@ export const ADVISORY_TYPES: AdvisoryType[] = [
   'Public Safety Advisory',
 ]
 
-export const SEVERITIES: Severity[] = ['Normal', 'Advisory', 'High', 'Critical']
+export const SEVERITIES: Severity[] = ['Normal', 'Low', 'Moderate', 'High', 'Critical']
+
+/** Maps legacy stored values (e.g. Advisory) to current severity terms. */
+export function normalizeSeverity(value?: string): Severity {
+  if (value === 'Advisory') return 'Moderate'
+  if (value && (SEVERITIES as readonly string[]).includes(value)) return value as Severity
+  return 'Moderate'
+}
 
 export const INFRA_TYPES = [
   'Roads', 'Bridges', 'Buildings', 'Schools', 'Hospitals',

@@ -621,7 +621,8 @@ body {
    BADGES — Severity
    ============================================================ */
 .severity-normal   { background: #dbeafe; color: #1e3a8a; border: 1px solid #93c5fd; }
-.severity-advisory { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+.severity-low      { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.severity-moderate { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
 .severity-high     { background: #ffedd5; color: #9a3412; border: 1px solid #fdba74; }
 .severity-critical { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
 

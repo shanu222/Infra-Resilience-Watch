@@ -1,4 +1,5 @@
 import type { Advisory, AppSettings, LibraryItem } from '../types'
+import { normalizeSeverity } from './constants'
 import { DEFAULT_LIBRARY_ITEMS } from './templates'
 
 export const EMPTY_SETTINGS: AppSettings = {
@@ -22,7 +23,7 @@ export function migrateAdvisory(raw: Partial<Advisory> & { id?: string }): Advis
     title: raw.title || '',
     type: raw.type || 'Infrastructure Advisory',
     hazard: raw.hazard || 'Other',
-    severity: raw.severity || 'Advisory',
+    severity: normalizeSeverity(raw.severity),
     province: raw.province || '',
     district: raw.district || '',
     specificLocation: raw.specificLocation || '',
