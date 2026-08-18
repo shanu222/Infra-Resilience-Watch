@@ -55,16 +55,17 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800" style={{ fontFamily: 'DM Serif Display, serif' }}>Dashboard</h1>
-            <p className="text-slate-500 text-sm mt-1">Infrastructure Resilience Watch · Operations</p>
+            <h1 className="text-2xl font-bold portal-heading" style={{ fontFamily: 'DM Serif Display, serif' }}>Dashboard</h1>
+            <p className="portal-subheading text-sm mt-1">Infrastructure Resilience Watch · Operations</p>
           </div>
           <button
-            onClick={() => navigate('/admin/advisories/new')}
-            className="btn-3d btn-3d-primary flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm"
+            type="button"
+            onClick={() => navigate('/admin/advisories/new?kind=advisory')}
+            className="btn-3d btn-3d-primary flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm w-full sm:w-auto"
           >
             <Plus size={18} />
             Create Content
@@ -74,7 +75,7 @@ export default function AdminDashboard() {
         {/* Stats grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
           {STATS.map(({ label, value, icon: Icon, color, bg }) => (
-            <div key={label} className="rounded-2xl p-4 bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <div key={label} className="rounded-2xl p-4 glass-panel hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: bg }}>
                   <Icon size={17} style={{ color }} />
@@ -88,7 +89,7 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Recent advisories */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="lg:col-span-2 glass-panel rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="font-semibold text-slate-700 text-sm">Recent Content</h2>
               <button onClick={() => navigate('/admin/advisories')} className="text-xs text-blue-600 hover:text-blue-700 font-medium">View all →</button>
@@ -96,7 +97,7 @@ export default function AdminDashboard() {
             {recent.length === 0 ? (
               <div className="p-8 text-center text-slate-400 text-sm">
                 No content yet.{' '}
-                <button onClick={() => navigate('/admin/advisories/new')} className="text-blue-600 hover:underline">Create your first entry</button>
+                <button type="button" onClick={() => navigate('/admin/advisories/new?kind=advisory')} className="text-blue-600 hover:underline">Create your first entry</button>
               </div>
             ) : (
               <div className="divide-y divide-slate-50">
@@ -122,7 +123,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Hazard breakdown */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="glass-panel rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
               <BarChart3 size={15} className="text-slate-400" />
               <h2 className="font-semibold text-slate-700 text-sm">Content by Hazard</h2>
@@ -152,7 +153,7 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Most viewed */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="glass-panel rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
               <Eye size={15} className="text-slate-400" />
               <h2 className="font-semibold text-slate-700 text-sm">Most Viewed</h2>
@@ -176,7 +177,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Province breakdown */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="glass-panel rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100">
               <h2 className="font-semibold text-slate-700 text-sm">Content by Province</h2>
             </div>
@@ -203,7 +204,7 @@ export default function AdminDashboard() {
         </div>
 
         {topKinds.length > 0 && (
-          <div className="mt-6 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="mt-6 glass-panel rounded-2xl overflow-hidden">
             <div className="px-5 py-4 border-b border-slate-100">
               <h2 className="font-semibold text-slate-700 text-sm">Content by Type</h2>
             </div>

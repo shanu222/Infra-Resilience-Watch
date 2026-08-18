@@ -9,6 +9,7 @@ import { HAZARD_TEMPLATES } from '../data/templates'
 import { HAZARDS, ADVISORY_TYPES, SEVERITIES, INFRA_TYPES, ISSUE_TYPES, CONTENT_KINDS, KIND_LABEL } from '../data/constants'
 import { BACKGROUND_TEMPLATES, DOCUMENT_THEMES } from '../data/documentDesign'
 import type { Advisory, AdvisoryType, ContentKind, HazardType, IssueType, Severity, AdvisoryImage, DocumentTheme } from '../types'
+import { userPathFor } from '../utils'
 
 const AFFECTED_INFRA = INFRA_TYPES
 
@@ -22,7 +23,7 @@ const TABS = [
   { id: 'preview', label: '7. Preview & Publish' },
 ]
 
-function blankAdvisory(kind: ContentKind = 'issue'): Omit<Advisory, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'viewCount'> {
+function blankAdvisory(kind: ContentKind = 'advisory'): Omit<Advisory, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'viewCount'> {
   return {
     kind, issueType: '', shortSummary: '', videoUrl: '', videoTitle: '', videoDescription: '', videoThumbnail: '', videoDuration: '',
     featured: false, advisoryNumber: '', identifiedProblem: '',
@@ -77,7 +78,7 @@ function ListEditor({ label, items, onChange, placeholder }: { label: string; it
 
 function FieldGroup({ children, title }: { children: React.ReactNode; title?: string }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-4">
+    <div className="glass-panel rounded-2xl p-5 mb-4">
       {title && <h3 className="text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">{title}</h3>}
       <div className="space-y-4">{children}</div>
     </div>
@@ -100,13 +101,13 @@ const SELECT_CLS = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-s
 const TEXTAREA_CLS = "w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 focus:border-blue-400 transition-colors bg-white resize-y min-h-24"
 
 export default function AdminEditor() {
-  const { advisories, createAdvisory, updateAdvisory, publishAdvisory, nextAdvisoryNumber, settings, library } = useApp()
+  const { advisories, saveContent, nextAdvisoryNumber, settings, library } = useApp()
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const [params] = useSearchParams()
   const isNew = !id || id === 'new'
   const existing = isNew ? null : advisories.find(a => a.id === id)
-  const initialKind = (params.get('kind') as ContentKind) || 'issue'
+  const initialKind = (params.get('kind') as ContentKind) || 'advisory'
 
   const [form, setForm] = useState(() => {
     const base = existing ? { ...blankAdvisory(), ...existing } : blankAdvisory(initialKind)
@@ -166,20 +167,21 @@ export default function AdminEditor() {
   }
 
   function handleSave(publish = false) {
+    if (publish && !form.title.trim()) {
+      setTab('basic')
+      alert('Please enter a title before publishing to the User Portal.')
+      return
+    }
     const data = { ...form }
     if (!data.advisoryNumber) data.advisoryNumber = nextAdvisoryNumber()
-    if (publish) data.status = 'Published'
-
-    if (isNew) {
-      const adv = createAdvisory(data)
-      if (publish) publishAdvisory(adv.id)
-      navigate(`/admin/advisories/${adv.id}/edit`)
-    } else if (existing) {
-      updateAdvisory(existing.id, data)
-      if (publish) publishAdvisory(existing.id)
-    }
+    const saved = saveContent(data, { id: existing?.id, publish })
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
+    if (publish) {
+      navigate(userPathFor(saved))
+      return
+    }
+    if (isNew) navigate(`/admin/advisories/${saved.id}/edit`)
   }
 
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -233,40 +235,44 @@ export default function AdminEditor() {
     <AdminLayout>
       <div className="flex flex-col min-h-screen">
         {/* Top bar */}
-        <div className="bg-white border-b border-slate-100 px-6 py-4 flex items-center gap-4 sticky top-0 z-20">
+        <div className="glass-toolbar no-print sticky top-0 z-20 px-4 sm:px-6 py-4 flex flex-wrap items-center gap-3">
           <button
+            type="button"
             onClick={() => navigate('/admin/advisories')}
             className="p-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all"
+            aria-label="Back to content library"
           >
             <ChevronLeft size={18} />
           </button>
           <div className="flex-1 min-w-0">
             <h1 className="text-base font-bold text-slate-800 truncate">{form.title || (isNew ? `New ${KIND_LABEL[form.kind || 'issue']}` : 'Edit Content')}</h1>
-            <div className="text-xs text-slate-400">{isNew ? `Creating ${KIND_LABEL[form.kind || 'issue']}` : `v${existing?.version || 1}`}</div>
+            <div className="text-xs text-slate-500">{isNew ? `Creating ${KIND_LABEL[form.kind || 'issue']}` : `v${existing?.version || 1}`}</div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
             {saved && (
               <span className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
                 <Check size={13} /> Saved
               </span>
             )}
             <button
+              type="button"
               onClick={() => setTab('preview')}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-all"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50 transition-all flex-1 sm:flex-none"
             >
               <Eye size={14} /> Preview
             </button>
             <button
+              type="button"
               onClick={() => handleSave(false)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all"
+              className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-all flex-1 sm:flex-none"
             >
               <Save size={14} /> Save Draft
             </button>
             <button
+              type="button"
               onClick={() => handleSave(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all"
-              style={{ background: 'linear-gradient(135deg, #1D4ED8, #06B6D4)' }}
+              className="btn-3d btn-3d-primary flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm flex-1 sm:flex-none"
             >
               <Globe size={14} /> Publish
             </button>
@@ -290,7 +296,7 @@ export default function AdminEditor() {
         )}
 
         {/* Tabs */}
-        <div className="bg-white border-b border-slate-100 px-6 overflow-x-auto">
+        <div className="glass-toolbar no-print px-4 sm:px-6 overflow-x-auto">
           <div className="flex gap-1 min-w-max">
             {TABS.map(t => (
               <button
@@ -309,7 +315,7 @@ export default function AdminEditor() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 p-6 max-w-4xl mx-auto w-full">
+        <div className="flex-1 p-4 sm:p-6 max-w-4xl mx-auto w-full min-w-0">
 
           {/* BASIC INFO */}
           {tab === 'basic' && (
@@ -608,7 +614,7 @@ export default function AdminEditor() {
               </div>
 
               {/* Library shortcut */}
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-4">
+              <div className="glass-panel rounded-2xl p-4 mb-4">
                 <div className="flex items-center gap-2 mb-3">
                   <BookOpen size={15} className="text-slate-500" />
                   <span className="text-sm font-semibold text-slate-700">Insert from Content Library</span>
@@ -866,8 +872,10 @@ export default function AdminEditor() {
                   <Globe size={14} /> Publish
                 </button>
               </div>
-              <div className={`rounded-2xl overflow-hidden border border-slate-200 shadow-lg mx-auto ${previewMode === 'mobile' ? 'max-w-sm' : 'max-w-4xl'}`}>
-                <AdvisoryDocument advisory={previewAdvisory} />
+              <div className="advisory-preview-frame rounded-2xl border border-slate-200 shadow-lg mx-auto">
+                <div className={`advisory-preview-inner ${previewMode === 'mobile' ? 'max-w-sm mx-auto' : ''}`}>
+                  <AdvisoryDocument advisory={previewAdvisory} />
+                </div>
               </div>
             </div>
           )}
@@ -877,7 +885,7 @@ export default function AdminEditor() {
       {/* Library modal */}
       {showLibrary && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[80vh] flex flex-col">
+          <div className="glass-panel rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-semibold text-slate-700">Content Library</h3>
               <button onClick={() => setShowLibrary(null)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">

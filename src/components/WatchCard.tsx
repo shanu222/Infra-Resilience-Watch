@@ -17,7 +17,14 @@ export default function WatchCard({ item, onOpen }: { item: Advisory; onOpen?: (
   }
 
   return (
-    <article className="premium-card rounded-2xl overflow-hidden flex flex-col cursor-pointer group" onClick={open}>
+    <article
+      className="premium-card rounded-2xl overflow-hidden flex flex-col cursor-pointer group"
+      onClick={open}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open() } }}
+      role="link"
+      tabIndex={0}
+      aria-label={item.title}
+    >
       <div className="h-44 relative overflow-hidden bg-slate-200">
         {coverImage ? (
           <img src={coverImage.dataUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />

@@ -24,6 +24,37 @@ export function locationLabel(item: Pick<Advisory, 'district' | 'province' | 'sp
   return [item.specificLocation, item.district, item.province].filter(Boolean).join(', ') || 'Pakistan'
 }
 
+export function startOfLocalDay(value: string): Date {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split('-').map(Number)
+    return new Date(y, m - 1, d, 0, 0, 0, 0)
+  }
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? new Date(0) : parsed
+}
+
+export function endOfLocalDay(value: string): Date {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split('-').map(Number)
+    return new Date(y, m - 1, d, 23, 59, 59, 999)
+  }
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? new Date(0) : parsed
+}
+
+export function isFutureDate(value: string | null | undefined): boolean {
+  if (!value) return false
+  return startOfLocalDay(value) > new Date()
+}
+
+export function isContentLive(a: Advisory): boolean {
+  const now = new Date()
+  if (a.status !== 'Published') return false
+  if (a.publishDate && startOfLocalDay(a.publishDate) > now) return false
+  if (a.expiryDate && endOfLocalDay(a.expiryDate) < now) return false
+  return true
+}
+
 export function sortNewest(items: Advisory[]): Advisory[] {
   return [...items].sort((a, b) => {
     if (a.featured !== b.featured) return a.featured ? -1 : 1

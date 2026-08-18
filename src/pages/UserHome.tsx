@@ -5,7 +5,7 @@ import { useApp } from '../contexts/AppContext'
 import FilterBar from '../components/FilterBar'
 import WatchCard from '../components/WatchCard'
 import { BRAND, CONTENT_KINDS } from '../data/constants'
-import { EMPTY_FILTERS, filterContent, hasActiveFilters, sortNewest } from '../utils'
+import { EMPTY_FILTERS, filterContent, hasActiveFilters, isContentLive, sortNewest } from '../utils'
 import type { ContentFilters, ContentKind } from '../types'
 
 const EXPLORE: { kind: ContentKind; to: string; icon: typeof FileText }[] = [
@@ -17,9 +17,9 @@ const EXPLORE: { kind: ContentKind; to: string; icon: typeof FileText }[] = [
 ]
 
 export default function UserHome() {
-  const { getPublishedAdvisories, getTodaysWatch, getPublishedByKind } = useApp()
-  const published = getPublishedAdvisories()
-  const watch = getTodaysWatch().slice(0, 6)
+  const { advisories, getPublishedByKind } = useApp()
+  const published = useMemo(() => sortNewest(advisories.filter(isContentLive)), [advisories])
+  const watch = published.slice(0, 6)
   const [filters, setFilters] = useState<ContentFilters>(EMPTY_FILTERS)
   const [applied, setApplied] = useState(false)
 
@@ -32,14 +32,14 @@ export default function UserHome() {
 
   return (
     <div>
-      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0B1F3A 0%, #1769AA 58%, #16B8D4 140%)' }}>
-        <div className="absolute inset-0 opacity-[0.12]" style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.35) 1px, transparent 1px)',
+      <section className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(11,31,58,0.55) 0%, rgba(23,105,170,0.38) 70%)' }}>
+        <div className="absolute inset-0 opacity-[0.08]" style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)',
           backgroundSize: '32px 32px',
         }} />
         <div className="relative max-w-6xl mx-auto px-4 py-12 md:py-16">
           <div className="text-xs font-semibold tracking-[0.28em] text-cyan-300 uppercase mb-3">Daily infrastructure intelligence</div>
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-3" style={{ fontFamily: 'DM Serif Display, serif' }}>
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-3" style={{ fontFamily: 'DM Serif Display, serif', textShadow: '0 2px 18px rgba(11,31,58,0.5)' }}>
             {BRAND.name}
           </h1>
           <p className="text-slate-300 text-base md:text-lg max-w-2xl mb-8">
@@ -66,7 +66,7 @@ export default function UserHome() {
         {searching ? (
           <section>
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-xl font-bold text-slate-800" style={{ fontFamily: 'DM Serif Display, serif' }}>
+              <h2 className="text-xl font-bold user-ink" style={{ fontFamily: 'DM Serif Display, serif' }}>
                 Search results — {results.length}
               </h2>
               <button
@@ -78,7 +78,7 @@ export default function UserHome() {
               </button>
             </div>
             {results.length === 0 ? (
-              <EmptyState title="No matching intelligence" body="Try adjusting hazard, location, infrastructure type or search terms." />
+            <EmptyState title="No matching intelligence" body="No infrastructure intelligence published yet. Try adjusting hazard, location, infrastructure type or search terms." />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {results.map(item => <WatchCard key={item.id} item={item} />)}
@@ -91,7 +91,7 @@ export default function UserHome() {
               <div className="flex items-end justify-between gap-4 mb-5">
                 <div>
                   <div className="text-xs font-bold uppercase tracking-widest text-cyan-700 mb-1">Latest published items</div>
-                  <h2 className="text-2xl font-bold text-slate-800" style={{ fontFamily: 'DM Serif Display, serif' }}>
+                  <h2 className="text-2xl font-bold user-ink" style={{ fontFamily: 'DM Serif Display, serif' }}>
                     Today{"'"}s Watch
                   </h2>
                 </div>
@@ -100,7 +100,7 @@ export default function UserHome() {
                 </Link>
               </div>
               {watch.length === 0 ? (
-                <EmptyState title="No items on Today's Watch yet" body="Published issues, advisories and solutions will appear here as soon as administrators release them." />
+                <EmptyState title="No items on Today's Watch yet" body="No infrastructure intelligence published yet. Published issues, advisories and solutions will appear here as soon as administrators release them." />
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {watch.map(item => <WatchCard key={item.id} item={item} />)}
@@ -110,7 +110,7 @@ export default function UserHome() {
 
             {published.some(a => a.images.length > 0) && (
               <section className="mb-12">
-                <h2 className="text-xl font-bold text-slate-800 mb-5" style={{ fontFamily: 'DM Serif Display, serif' }}>
+                <h2 className="text-xl font-bold user-ink mb-5" style={{ fontFamily: 'DM Serif Display, serif' }}>
                   Field Photographs
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -131,7 +131,7 @@ export default function UserHome() {
             )}
 
             <section className="mb-12">
-              <h2 className="text-xl font-bold text-slate-800 mb-5" style={{ fontFamily: 'DM Serif Display, serif' }}>
+              <h2 className="text-xl font-bold user-ink mb-5" style={{ fontFamily: 'DM Serif Display, serif' }}>
                 Explore Infrastructure Intelligence
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

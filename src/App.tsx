@@ -40,11 +40,11 @@ function AppRoutes() {
         <Route path="/case-studies" element={<UserBrowse section="case-studies" />} />
         <Route path="/about" element={<About />} />
         <Route path="/content/:id" element={<AdvisoryDetail />} />
+        <Route path="/advisories/:id" element={<AdvisoryDetail />} />
       </Route>
 
       <Route path="/user" element={<Navigate to="/" replace />} />
       <Route path="/user/*" element={<RedirectUserPrefix />} />
-      <Route path="/advisories/:id" element={<AdvisoryDetail />} />
 
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<RequireAuth><AdminDashboard /></RequireAuth>} />

@@ -47,17 +47,17 @@ export default function AdminAdvisories() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-6 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800" style={{ fontFamily: 'DM Serif Display, serif' }}>Content</h1>
-            <p className="text-slate-500 text-sm mt-1">{advisories.length} issues, advisories, solutions and records</p>
+            <h1 className="text-2xl font-bold portal-heading" style={{ fontFamily: 'DM Serif Display, serif' }}>Content</h1>
+            <p className="portal-subheading text-sm mt-1">{advisories.length} issues, advisories, solutions and records</p>
           </div>
           <button
-            onClick={() => navigate('/admin/advisories/new')}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold shadow-lg hover:shadow-xl transition-all"
-            style={{ background: 'linear-gradient(135deg, #1D4ED8, #06B6D4)' }}
+            type="button"
+            onClick={() => navigate('/admin/advisories/new?kind=advisory')}
+            className="btn-3d btn-3d-primary flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm w-full sm:w-auto"
           >
             <Plus size={18} />
             Create Content
@@ -79,9 +79,9 @@ export default function AdminAdvisories() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-4">
-          <div className="flex flex-wrap gap-3">
-            <div className="flex-1 min-w-48 relative">
+        <div className="glass-panel rounded-2xl p-4 mb-4">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3">
+            <div className="w-full sm:flex-1 sm:min-w-48 relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
@@ -134,7 +134,7 @@ export default function AdminAdvisories() {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="glass-panel rounded-2xl overflow-hidden">
           {filtered.length === 0 ? (
             <div className="p-12 text-center">
               <div className="text-slate-300 mb-4">
@@ -143,7 +143,7 @@ export default function AdminAdvisories() {
               <p className="text-slate-500 text-sm mb-4">{advisories.length === 0 ? 'No content yet.' : 'No items match your filters.'}</p>
               {advisories.length === 0 && (
                 <button
-                  onClick={() => navigate('/admin/advisories/new')}
+                  onClick={() => navigate('/admin/advisories/new?kind=advisory')}
                   className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold"
                   style={{ background: 'linear-gradient(135deg, #1D4ED8, #06B6D4)' }}
                 >
@@ -152,7 +152,7 @@ export default function AdminAdvisories() {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="table-scroll">
               <table className="w-full text-sm">
                 <thead>
                   <tr style={{ background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
@@ -278,7 +278,7 @@ export default function AdminAdvisories() {
       {/* Delete confirmation modal */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setConfirmDelete(null)}>
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="glass-panel modal-sheet rounded-2xl p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
               <Trash2 size={20} style={{ color: '#DC2626' }} />
             </div>

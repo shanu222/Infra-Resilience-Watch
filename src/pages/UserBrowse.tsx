@@ -3,7 +3,7 @@ import { Shield } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import FilterBar from '../components/FilterBar'
 import WatchCard from '../components/WatchCard'
-import { EMPTY_FILTERS, filterContent, sortNewest } from '../utils'
+import { EMPTY_FILTERS, filterContent, isContentLive, sortNewest } from '../utils'
 import type { ContentFilters, ContentKind } from '../types'
 
 const SECTIONS: Record<string, { title: string; description: string; kinds: ContentKind[] | null }> = {
@@ -40,25 +40,25 @@ const SECTIONS: Record<string, { title: string; description: string; kinds: Cont
 }
 
 export default function UserBrowse({ section }: { section: keyof typeof SECTIONS }) {
-  const { getPublishedAdvisories, getTodaysWatch } = useApp()
+  const { advisories } = useApp()
   const meta = SECTIONS[section]
   const [filters, setFilters] = useState<ContentFilters>(EMPTY_FILTERS)
 
-  const source = section === 'watch' ? getTodaysWatch() : getPublishedAdvisories()
-
   const items = useMemo(() => {
+    const published = advisories.filter(isContentLive)
+    const source = section === 'watch' ? sortNewest(published).slice(0, 12) : published
     const scoped = meta.kinds ? source.filter(a => meta.kinds!.includes(a.kind)) : source
     return sortNewest(filterContent(scoped, filters))
-  }, [source, filters, meta.kinds])
+  }, [advisories, filters, meta.kinds, section])
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      <div className="mb-8">
+      <div className="glass-panel rounded-2xl p-5 mb-8">
         <div className="text-xs font-bold uppercase tracking-widest text-cyan-700 mb-1">User Portal</div>
         <h1 className="text-3xl font-bold text-slate-800 mb-2" style={{ fontFamily: 'DM Serif Display, serif' }}>
           {meta.title}
         </h1>
-        <p className="text-slate-500 text-sm max-w-2xl">{meta.description}</p>
+        <p className="text-slate-600 text-sm max-w-2xl">{meta.description}</p>
       </div>
 
       <div className="mb-8">
@@ -68,14 +68,14 @@ export default function UserBrowse({ section }: { section: keyof typeof SECTIONS
       {items.length === 0 ? (
         <div className="glass-panel rounded-2xl p-12 text-center">
           <Shield size={36} className="mx-auto mb-3 text-slate-300" />
-          <h2 className="text-lg font-bold text-slate-600 mb-2" style={{ fontFamily: 'DM Serif Display, serif' }}>
-            No published items yet
+          <h2 className="text-lg font-bold text-slate-700 mb-2" style={{ fontFamily: 'DM Serif Display, serif' }}>
+            No infrastructure intelligence published yet
           </h2>
-          <p className="text-slate-400 text-sm">Content appears here after an administrator publishes it.</p>
+          <p className="text-slate-500 text-sm">Content appears here after an administrator publishes it.</p>
         </div>
       ) : (
         <>
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">
+          <div className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-4">
             {items.length} item{items.length === 1 ? '' : 's'}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

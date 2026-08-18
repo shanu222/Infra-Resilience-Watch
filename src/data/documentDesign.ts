@@ -59,5 +59,6 @@ export function backgroundLayer(template: BackgroundTemplate | undefined, custom
       backgroundImage: 'linear-gradient(180deg, #0B3D2E 0%, #168A5B 120px, #ECFDF5 120px)',
     },
   }
-  return map[(template || 'ndma-blue') === 'custom' ? 'ndma-blue' : (template || 'ndma-blue')]
+  const key = !template || template === 'custom' ? 'ndma-blue' : template
+  return map[key]
 }

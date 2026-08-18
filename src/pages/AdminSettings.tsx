@@ -19,9 +19,9 @@ export default function AdminSettings() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold text-slate-800 mb-1" style={{ fontFamily: 'DM Serif Display, serif' }}>Document Settings</h1>
-        <p className="text-slate-500 text-sm mb-6">Organization logos and default advisory design. Individual advisories can still override these.</p>
+      <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold portal-heading mb-1" style={{ fontFamily: 'DM Serif Display, serif' }}>Document Settings</h1>
+        <p className="portal-subheading text-sm mb-6">Organization logos and default advisory design. Individual advisories can still override these.</p>
 
         <div className="premium-card rounded-2xl p-5 mb-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-600 mb-4">Logos</h2>

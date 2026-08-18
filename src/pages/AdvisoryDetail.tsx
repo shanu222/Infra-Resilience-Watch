@@ -5,18 +5,18 @@ import { useApp } from '../contexts/AppContext'
 import AdvisoryDocument from '../components/AdvisoryDocument'
 import SeverityBadge from '../components/SeverityBadge'
 import WatchCard from '../components/WatchCard'
-import { relatedItems, userPathFor } from '../utils'
+import { relatedItems, userPathFor, isContentLive } from '../utils'
 import { BRAND } from '../data/constants'
 
 export default function AdvisoryDetail() {
   const { id } = useParams<{ id: string }>()
-  const { getPublishedAdvisories, advisories, incrementViewCount, isAuthenticated } = useApp()
+  const { advisories, incrementViewCount, isAuthenticated } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
 
-  const published = getPublishedAdvisories()
-  const advisory = published.find(a => a.id === id)
-    || (isAuthenticated ? advisories.find(a => a.id === id) : undefined)
+  const live = advisories.find(a => a.id === id && isContentLive(a))
+  const advisory = live || (isAuthenticated ? advisories.find(a => a.id === id) : undefined)
+  const published = advisories.filter(isContentLive)
 
   useEffect(() => {
     if (advisory && advisory.status === 'Published') {
@@ -28,12 +28,12 @@ export default function AdvisoryDetail() {
 
   if (!advisory) {
     return (
-      <div className="min-h-screen flex items-center justify-center py-16" style={{ background: '#f8fafc' }}>
-        <div className="text-center">
-          <Shield size={48} className="mx-auto mb-4 text-slate-300" />
-          <h1 className="text-xl font-bold text-slate-600 mb-2">Content Not Found</h1>
-          <p className="text-slate-400 text-sm mb-6">This item may have expired, been archived, or the link may be incorrect.</p>
-          <button type="button" onClick={() => navigate('/')} className="px-5 py-2.5 rounded-xl text-white text-sm font-semibold" style={{ background: '#1D4ED8' }}>
+      <div className="min-h-[60vh] flex items-center justify-center py-16 px-4">
+        <div className="glass-panel rounded-2xl p-8 text-center max-w-md w-full">
+          <Shield size={48} className="mx-auto mb-4 text-slate-400" />
+          <h1 className="text-xl font-bold text-slate-700 mb-2">Content Not Found</h1>
+          <p className="text-slate-500 text-sm mb-6">This item may have expired, been archived, or the link may be incorrect.</p>
+          <button type="button" onClick={() => navigate('/')} className="btn-3d btn-3d-primary px-5 py-2.5 rounded-xl text-sm">
             Back to User Portal
           </button>
         </div>
@@ -59,14 +59,14 @@ export default function AdvisoryDetail() {
   const related = relatedItems(published, advisory, 3)
 
   function goBack() {
-    if (advisory.status !== 'Published') navigate('/admin/advisories')
+    if (advisory!.status !== 'Published') navigate('/admin/advisories')
     else navigate('/')
   }
 
   return (
-    <div className="min-h-screen" style={{ background: inUserPortal ? 'transparent' : '#f1f5f9' }}>
-      <div className={`no-print bg-white border-b border-slate-100 ${inUserPortal ? '' : 'sticky top-0 z-20 shadow-sm'}`}>
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
+    <div className="min-h-screen">
+      <div className={`no-print glass-toolbar ${inUserPortal ? '' : 'sticky top-0 z-20'}`}>
+        <div className="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={goBack}
@@ -78,7 +78,7 @@ export default function AdvisoryDetail() {
           <div className="flex-1 min-w-0">
             <div className="text-sm font-medium text-slate-700 truncate hidden sm:block">{advisory.title}</div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-end">
             <SeverityBadge severity={advisory.severity} size="sm" />
             <button
               type="button"
@@ -99,10 +99,11 @@ export default function AdvisoryDetail() {
             <button
               type="button"
               onClick={handlePrint}
-              className="btn-3d btn-3d-primary flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm"
+              className="btn-3d btn-3d-primary flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm flex-1 sm:flex-none justify-center"
             >
               <Download size={14} />
               <span className="hidden sm:inline">Download PDF</span>
+              <span className="sm:hidden">PDF</span>
             </button>
           </div>
         </div>
@@ -110,7 +111,7 @@ export default function AdvisoryDetail() {
 
       {advisory.status !== 'Published' && (
         <div className="no-print max-w-5xl mx-auto px-4 pt-4">
-          <div className="px-4 py-3 rounded-xl text-sm text-amber-800 flex items-center gap-2" style={{ background: '#fef3c7', border: '1px solid #fcd34d' }}>
+          <div className="px-4 py-3 rounded-xl text-sm text-amber-800 flex items-center gap-2" style={{ background: 'rgba(254,243,199,0.92)', border: '1px solid #fcd34d' }}>
             <Eye size={15} />
             <strong>Admin Preview:</strong> This item is in <strong>{advisory.status}</strong> status and is not visible to the public.
           </div>
@@ -118,14 +119,16 @@ export default function AdvisoryDetail() {
       )}
 
       <div className="max-w-5xl mx-auto px-4 py-6">
-        <div className="rounded-2xl overflow-hidden shadow-xl border border-slate-200">
-          <AdvisoryDocument advisory={advisory} />
+        <div className="advisory-preview-frame rounded-2xl shadow-xl border border-slate-200">
+          <div className="advisory-preview-inner">
+            <AdvisoryDocument advisory={advisory} />
+          </div>
         </div>
       </div>
 
       {related.length > 0 && (
         <div className="no-print max-w-5xl mx-auto px-4 pb-6">
-          <h2 className="text-lg font-bold text-slate-800 mb-4" style={{ fontFamily: 'DM Serif Display, serif' }}>Related content</h2>
+          <h2 className="text-lg font-bold user-ink mb-4" style={{ fontFamily: 'DM Serif Display, serif' }}>Related content</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {related.map(item => (
               <WatchCard key={item.id} item={item} onOpen={() => navigate(userPathFor(item))} />
@@ -135,8 +138,8 @@ export default function AdvisoryDetail() {
       )}
 
       <div className="no-print max-w-5xl mx-auto px-4 pb-8">
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-          <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
+        <div className="glass-panel rounded-2xl p-5">
+          <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-600">
             <div className="flex flex-wrap gap-4">
               <span className="flex items-center gap-1.5">
                 <Shield size={12} />
@@ -147,16 +150,16 @@ export default function AdvisoryDetail() {
                 Published: {advisory.publishedAt ? new Date(advisory.publishedAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Not published'}
               </span>
               {advisory.expiryDate && (
-                <span className="text-amber-600 flex items-center gap-1.5">
+                <span className="text-amber-700 flex items-center gap-1.5">
                   Expires: {new Date(advisory.expiryDate).toLocaleDateString('en-PK', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
               )}
             </div>
             <div className="flex gap-3">
-              <button type="button" onClick={handleShare} className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 font-medium">
+              <button type="button" onClick={handleShare} className="flex items-center gap-1.5 text-blue-700 hover:text-blue-800 font-medium">
                 <Share2 size={12} /> Share
               </button>
-              <button type="button" onClick={handlePrint} className="flex items-center gap-1.5 text-slate-600 hover:text-slate-700 font-medium">
+              <button type="button" onClick={handlePrint} className="flex items-center gap-1.5 text-slate-700 hover:text-slate-800 font-medium">
                 <Printer size={12} /> Print
               </button>
             </div>

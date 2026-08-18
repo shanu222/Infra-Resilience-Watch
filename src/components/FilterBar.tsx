@@ -95,8 +95,8 @@ export default function FilterBar({
           </div>
         )}
       </div>
-      <div className="flex gap-3">
-        <div className="flex-1 relative">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 relative min-w-0">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
@@ -106,14 +106,14 @@ export default function FilterBar({
             onKeyDown={e => e.key === 'Enter' && onSearch?.()}
             className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 focus:border-blue-400"
             style={{ outline: 'none' }}
+            aria-label="Search infrastructure intelligence"
           />
         </div>
         {onSearch && (
           <button
             type="button"
             onClick={onSearch}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold whitespace-nowrap"
-            style={{ background: 'linear-gradient(135deg, #1D4ED8, #06B6D4)' }}
+            className="btn-3d btn-3d-primary flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm w-full sm:w-auto whitespace-nowrap"
           >
             <Search size={14} />
             Search

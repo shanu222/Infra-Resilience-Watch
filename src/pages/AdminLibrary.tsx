@@ -47,23 +47,23 @@ export default function AdminLibrary() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="p-4 sm:p-6 max-w-6xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800" style={{ fontFamily: 'DM Serif Display, serif' }}>Content Library</h1>
-            <p className="text-slate-500 text-sm mt-1">Reusable measures, guidance and engineering notes</p>
+            <h1 className="text-2xl font-bold portal-heading" style={{ fontFamily: 'DM Serif Display, serif' }}>Content Library</h1>
+            <p className="portal-subheading text-sm mt-1">Reusable measures, guidance and engineering notes</p>
           </div>
           <button
+            type="button"
             onClick={() => setShowAdd(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold shadow-lg"
-            style={{ background: 'linear-gradient(135deg, #1D4ED8, #06B6D4)' }}
+            className="btn-3d btn-3d-primary flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm w-full sm:w-auto"
           >
             <Plus size={18} /> Add Item
           </button>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 mb-4">
+        <div className="glass-panel rounded-2xl p-4 mb-4">
           <div className="flex flex-wrap gap-3">
             <div className="flex gap-1.5 flex-wrap">
               {(['All', ...CATEGORIES] as const).map(c => (
@@ -93,14 +93,14 @@ export default function AdminLibrary() {
 
         {/* Items grid */}
         {filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-12 text-center">
+          <div className="glass-panel rounded-2xl p-12 text-center">
             <BookOpen size={36} className="mx-auto mb-3 text-slate-300" />
             <p className="text-slate-500 text-sm">No items found. Add items to build your library.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filtered.map(item => (
-              <div key={item.id} className="bg-white rounded-xl border border-slate-100 shadow-sm p-4 group hover:border-slate-200 transition-all">
+              <div key={item.id} className="glass-panel rounded-xl p-4 group hover:border-slate-200 transition-all">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex gap-1.5 flex-wrap">
                     <span className="text-xs px-2 py-0.5 rounded-full font-medium" style={{ background: CAT_COLORS[item.category], color: CAT_TEXT[item.category] }}>
@@ -128,7 +128,7 @@ export default function AdminLibrary() {
       {/* Add modal */}
       {showAdd && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+          <div className="glass-panel modal-sheet rounded-2xl shadow-2xl">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-semibold text-slate-700">Add Library Item</h3>
               <button onClick={() => setShowAdd(false)} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">

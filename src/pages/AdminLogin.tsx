@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Shield, Eye, EyeOff, LogIn } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import { useNavigate } from 'react-router-dom'
+import PortalBackground from '../components/PortalBackground'
 
 export default function AdminLogin() {
   const { login, isAuthenticated } = useApp()
@@ -31,14 +32,9 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #0A1628 0%, #1E3A5F 60%, #162B52 100%)' }}>
-      {/* Background dots */}
-      <div className="absolute inset-0 opacity-10" style={{
-        backgroundImage: 'radial-gradient(circle at center, rgba(6,182,212,0.8) 1px, transparent 1px)',
-        backgroundSize: '24px 24px',
-      }} />
-
-      <div className="relative w-full max-w-md">
+    <div className="portal-shell min-h-screen flex items-center justify-center p-4">
+      <PortalBackground variant="admin" />
+      <div className="portal-content relative w-full max-w-md px-1">
         {/* Logo area */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.3)' }}>
@@ -47,7 +43,7 @@ export default function AdminLogin() {
           <h1 className="text-2xl font-bold text-white mb-1" style={{ fontFamily: 'DM Serif Display, serif' }}>
             Admin Portal
           </h1>
-          <p className="text-slate-400 text-sm">Infrastructure Resilience Watch</p>
+          <p className="text-slate-200 text-sm">Infrastructure Resilience Watch</p>
         </div>
 
         {/* Card */}
@@ -94,6 +90,7 @@ export default function AdminLogin() {
                   type="button"
                   onClick={() => setShowPass(!showPass)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors"
+                  aria-label={showPass ? 'Hide password' : 'Show password'}
                 >
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
@@ -134,7 +131,7 @@ export default function AdminLogin() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-slate-500 mt-6">
+        <p className="text-center text-xs text-slate-200 mt-6">
           Authorized personnel only. Create, publish and manage infrastructure intelligence.
         </p>
       </div>

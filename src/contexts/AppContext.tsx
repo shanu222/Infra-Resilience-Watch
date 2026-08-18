@@ -1,17 +1,18 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from 'react'
 import type { Advisory, AppSettings, ContentKind, LibraryItem } from '../types'
 import { DEFAULT_LIBRARY_ITEMS } from '../data/templates'
-import { sortNewest } from '../utils'
+import { isContentLive, isFutureDate, sortNewest } from '../utils'
+import { persistAppState, readIndexedState, readLocalState, subscribeToRemoteState } from '../data/store'
 
 const ADMIN_USERNAME = 'admin'
 const ADMIN_PASSWORD = 'Admin@2026'
-const STORAGE_KEY = 'infraadvisory_data'
 const AUTH_KEY = 'infraadvisory_auth'
 
 interface AppState {
   advisories: Advisory[]
   library: LibraryItem[]
   settings: AppSettings
+  rev: number
 }
 
 interface AppContextType {
@@ -23,6 +24,10 @@ interface AppContextType {
   logout: () => void
   createAdvisory: (advisory: Omit<Advisory, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'viewCount'>) => Advisory
   updateAdvisory: (id: string, updates: Partial<Advisory>) => void
+  saveContent: (
+    data: Omit<Advisory, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'viewCount'> & Partial<Pick<Advisory, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'viewCount' | 'status' | 'publishedAt'>>,
+    options?: { id?: string; publish?: boolean }
+  ) => Advisory
   deleteAdvisory: (id: string) => void
   publishAdvisory: (id: string) => void
   archiveAdvisory: (id: string) => void
@@ -113,9 +118,9 @@ const EMPTY_SETTINGS: AppSettings = {
 
 function loadState(): AppState {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = readLocalState()
     if (stored) {
-      const parsed = JSON.parse(stored) as { advisories?: Partial<Advisory>[]; library?: LibraryItem[]; settings?: Partial<AppSettings> }
+      const parsed = JSON.parse(stored) as { advisories?: Partial<Advisory>[]; library?: LibraryItem[]; settings?: Partial<AppSettings>; rev?: number }
       return {
         advisories: (parsed.advisories || []).map(migrateAdvisory),
         library: parsed.library?.length
@@ -126,6 +131,7 @@ function loadState(): AppState {
               createdAt: new Date().toISOString(),
             })),
         settings: { ...EMPTY_SETTINGS, ...(parsed.settings || {}) },
+        rev: parsed.rev || Date.now(),
       }
     }
   } catch {}
@@ -137,20 +143,17 @@ function loadState(): AppState {
       createdAt: new Date().toISOString(),
     })),
     settings: EMPTY_SETTINGS,
+    rev: 0,
   }
 }
 
-function saveState(state: AppState) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
-  } catch {}
-}
-
-function isLive(a: Advisory, now = new Date()): boolean {
-  if (a.status !== 'Published') return false
-  if (a.publishDate && new Date(a.publishDate) > now) return false
-  if (a.expiryDate && new Date(a.expiryDate) < now) return false
-  return true
+function applyRemote(parsed: { advisories?: Partial<Advisory>[]; library?: LibraryItem[]; settings?: Partial<AppSettings>; rev?: number }): AppState {
+  return {
+    advisories: (parsed.advisories || []).map(migrateAdvisory),
+    library: parsed.library || [],
+    settings: { ...EMPTY_SETTINGS, ...(parsed.settings || {}) },
+    rev: parsed.rev || Date.now(),
+  }
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -158,10 +161,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return localStorage.getItem(AUTH_KEY) === 'true'
   })
+  const applyingRemote = useRef(false)
 
   useEffect(() => {
-    saveState(state)
+    if (applyingRemote.current) {
+      applyingRemote.current = false
+      return
+    }
+    persistAppState(state)
   }, [state])
+
+  useEffect(() => {
+    void readIndexedState().then(raw => {
+      if (!raw) return
+      try {
+        const parsed = applyRemote(JSON.parse(raw))
+        setState(s => {
+          if ((parsed.rev || 0) <= (s.rev || 0)) return s
+          applyingRemote.current = true
+          return parsed
+        })
+      } catch {}
+    })
+    return subscribeToRemoteState(remote => {
+      setState(s => {
+        if ((remote.rev || 0) <= (s.rev || 0)) return s
+        applyingRemote.current = true
+        return applyRemote(remote)
+      })
+    })
+  }, [])
 
   function login(username: string, password: string): boolean {
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
@@ -177,48 +206,83 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(AUTH_KEY)
   }
 
-  function createAdvisory(data: Omit<Advisory, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'viewCount'>): Advisory {
+  function saveContent(
+    data: Omit<Advisory, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'viewCount'> & Partial<Pick<Advisory, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'viewCount' | 'status' | 'publishedAt'>>,
+    options: { id?: string; publish?: boolean } = {}
+  ): Advisory {
     const now = new Date().toISOString()
-    const advisory = migrateAdvisory({
-      ...data,
-      id: `adv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-      createdAt: now,
-      updatedAt: now,
-      version: 1,
-      viewCount: 0,
+    const publish = Boolean(options.publish)
+    let result: Advisory | undefined
+
+    setState(s => {
+      let next: typeof s
+      if (!options.id) {
+        result = migrateAdvisory({
+          ...data,
+          id: `adv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          createdAt: now,
+          updatedAt: now,
+          version: 1,
+          viewCount: 0,
+          status: publish ? 'Published' : (data.status || 'Draft'),
+          publishedAt: publish ? now : (data.publishedAt ?? null),
+          publishDate: publish && isFutureDate(data.publishDate) ? null : (data.publishDate ?? null),
+        })
+        next = { ...s, rev: Date.now(), advisories: [result, ...s.advisories] }
+      } else {
+        next = {
+          ...s,
+          rev: Date.now(),
+          advisories: s.advisories.map(a => {
+            if (a.id !== options.id) return a
+            result = migrateAdvisory({
+              ...a,
+              ...data,
+              id: a.id,
+              createdAt: a.createdAt,
+              updatedAt: now,
+              version: a.version + 1,
+              viewCount: a.viewCount,
+              status: publish ? 'Published' : (data.status ?? a.status),
+              publishedAt: publish ? (a.publishedAt || now) : (data.publishedAt ?? a.publishedAt),
+              publishDate: publish && isFutureDate(data.publishDate) ? null : (data.publishDate ?? a.publishDate),
+            })
+            return result
+          }),
+        }
+      }
+      persistAppState(next)
+      return next
     })
-    setState(s => ({ ...s, advisories: [advisory, ...s.advisories] }))
-    return advisory
+
+    if (!result) throw new Error('Item not found')
+    return result
+  }
+
+  function createAdvisory(data: Omit<Advisory, 'id' | 'createdAt' | 'updatedAt' | 'version' | 'viewCount'>): Advisory {
+    return saveContent(data)
   }
 
   function updateAdvisory(id: string, updates: Partial<Advisory>) {
-    setState(s => ({
-      ...s,
-      advisories: s.advisories.map(a =>
-        a.id === id
-          ? migrateAdvisory({ ...a, ...updates, updatedAt: new Date().toISOString(), version: a.version + 1 })
-          : a
-      ),
-    }))
+    const current = state.advisories.find(a => a.id === id)
+    if (!current) return
+    saveContent({ ...current, ...updates }, { id })
   }
 
   function deleteAdvisory(id: string) {
-    setState(s => ({ ...s, advisories: s.advisories.filter(a => a.id !== id) }))
+    setState(s => ({ ...s, rev: Date.now(), advisories: s.advisories.filter(a => a.id !== id) }))
   }
 
   function publishAdvisory(id: string) {
-    const now = new Date().toISOString()
-    setState(s => ({
-      ...s,
-      advisories: s.advisories.map(a =>
-        a.id === id ? { ...a, status: 'Published', publishedAt: a.publishedAt || now, updatedAt: now } : a
-      ),
-    }))
+    const current = state.advisories.find(a => a.id === id)
+    if (!current) return
+    saveContent(current, { id, publish: true })
   }
 
   function archiveAdvisory(id: string) {
     setState(s => ({
       ...s,
+      rev: Date.now(),
       advisories: s.advisories.map(a =>
         a.id === id ? { ...a, status: 'Archived', updatedAt: new Date().toISOString() } : a
       ),
@@ -228,6 +292,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   function unpublishAdvisory(id: string) {
     setState(s => ({
       ...s,
+      rev: Date.now(),
       advisories: s.advisories.map(a =>
         a.id === id ? { ...a, status: 'Draft', updatedAt: new Date().toISOString() } : a
       ),
@@ -250,13 +315,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       version: 1,
       viewCount: 0,
     })
-    setState(s => ({ ...s, advisories: [copy, ...s.advisories] }))
+    setState(s => ({ ...s, rev: Date.now(), advisories: [copy, ...s.advisories] }))
     return copy
   }
 
   function incrementViewCount(id: string) {
     setState(s => ({
       ...s,
+      rev: Date.now(),
       advisories: s.advisories.map(a =>
         a.id === id ? { ...a, viewCount: a.viewCount + 1 } : a
       ),
@@ -269,16 +335,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       id: `lib_${Date.now()}`,
       createdAt: new Date().toISOString(),
     }
-    setState(s => ({ ...s, library: [newItem, ...s.library] }))
+    setState(s => ({ ...s, rev: Date.now(), library: [newItem, ...s.library] }))
   }
 
   function deleteLibraryItem(id: string) {
-    setState(s => ({ ...s, library: s.library.filter(l => l.id !== id) }))
+    setState(s => ({ ...s, rev: Date.now(), library: s.library.filter(l => l.id !== id) }))
   }
 
   function getPublishedAdvisories(): Advisory[] {
-    const now = new Date()
-    return state.advisories.filter(a => isLive(a, now))
+    return state.advisories.filter(a => isContentLive(a))
   }
 
   function getPublishedByKind(kind: ContentKind): Advisory[] {
@@ -320,12 +385,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       version: 1,
       viewCount: 0,
     })
-    setState(s => ({ ...s, advisories: [copy, ...s.advisories] }))
+    setState(s => ({ ...s, rev: Date.now(), advisories: [copy, ...s.advisories] }))
     return copy
   }
 
   function updateSettings(updates: Partial<AppSettings>) {
-    setState(s => ({ ...s, settings: { ...s.settings, ...updates } }))
+    setState(s => ({ ...s, rev: Date.now(), settings: { ...s.settings, ...updates } }))
   }
 
   return (
@@ -339,6 +404,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         logout,
         createAdvisory,
         updateAdvisory,
+        saveContent,
         deleteAdvisory,
         publishAdvisory,
         archiveAdvisory,

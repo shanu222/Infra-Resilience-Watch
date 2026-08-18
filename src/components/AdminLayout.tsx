@@ -4,6 +4,7 @@ import {
   LayoutDashboard, FileText, Library, LogOut, Shield, Menu, X, ChevronRight, Globe, Plus, Settings, AlertTriangle, Play, Wrench,
 } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
+import PortalBackground from './PortalBackground'
 
 const NAV = [
   { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -27,86 +28,98 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#f1f5f9' }}>
-      <aside
-        className={`fixed inset-y-0 left-0 z-40 flex flex-col transition-all duration-300 ${open ? 'w-64' : 'w-64 -translate-x-full'} md:translate-x-0 md:w-64`}
-        style={{ background: 'linear-gradient(180deg, #0A1628 0%, #0F2040 100%)', borderRight: '1px solid rgba(255,255,255,0.06)' }}
-      >
-        <div className="p-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl" style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.25)' }}>
-              <Shield size={18} style={{ color: '#06B6D4' }} />
-            </div>
-            <div>
-              <div className="text-white text-sm font-bold leading-tight">Resilience Watch</div>
-              <div className="text-slate-500 text-xs">Admin Portal</div>
+    <div className="portal-shell">
+      <PortalBackground variant="admin" />
+      <div className="portal-content min-h-screen flex">
+        <aside
+          id="admin-sidebar"
+          className={`fixed inset-y-0 left-0 z-40 flex flex-col w-64 md:w-20 lg:w-64 transition-transform duration-300 glass-sidebar no-print ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+          style={{ borderRight: '1px solid rgba(255,255,255,0.1)' }}
+        >
+          <div className="p-4 lg:p-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+            <div className="flex items-center gap-3 md:justify-center lg:justify-start">
+              <div className="flex items-center justify-center w-9 h-9 rounded-xl shrink-0" style={{ background: 'rgba(22,184,212,0.15)', border: '1px solid rgba(22,184,212,0.25)' }}>
+                <Shield size={18} style={{ color: '#16B8D4' }} />
+              </div>
+              <div className="md:hidden lg:block">
+                <div className="text-white text-sm font-bold leading-tight">Resilience Watch</div>
+                <div className="text-slate-400 text-xs">Admin Portal</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <nav className="flex-1 p-3 space-y-1">
-          {NAV.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              onClick={() => setOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  isActive
-                    ? 'text-white'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                }`
-              }
-              style={({ isActive }) => isActive ? { background: 'rgba(6,182,212,0.12)', color: '#06B6D4' } : {}}
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto" aria-label="Admin">
+            {NAV.map(({ to, icon: Icon, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                title={label}
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all md:justify-center lg:justify-start md:px-2 lg:px-4 ${
+                    isActive ? 'text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  }`
+                }
+                style={({ isActive }) => isActive ? { background: 'rgba(22,184,212,0.14)', color: '#16B8D4' } : {}}
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon size={17} className="shrink-0" />
+                    <span className="md:hidden lg:inline">{label}</span>
+                    {isActive && <ChevronRight size={14} className="ml-auto hidden lg:block" />}
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+            <Link
+              to="/"
+              title="View User Portal"
+              className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-300 hover:text-white text-sm transition-all hover:bg-white/5 mb-1 md:justify-center lg:justify-start md:px-2 lg:px-4"
             >
-              {({ isActive }) => (
-                <>
-                  <Icon size={17} />
-                  <span>{label}</span>
-                  {isActive && <ChevronRight size={14} className="ml-auto" />}
-                </>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-          <Link
-            to="/"
-            className="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:text-slate-200 text-sm transition-all hover:bg-white/5 mb-1"
-          >
-            <Globe size={17} />
-            View User Portal
-          </Link>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:text-red-400 text-sm transition-all hover:bg-red-500/10"
-          >
-            <LogOut size={17} />
-            Sign Out
-          </button>
-        </div>
-      </aside>
-
-      {open && (
-        <div className="fixed inset-0 z-30 bg-black/50 md:hidden" onClick={() => setOpen(false)} />
-      )}
-
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b border-slate-200 bg-white">
-          <button type="button" onClick={() => setOpen(!open)} className="p-2 rounded-lg text-slate-600 hover:bg-slate-100">
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </button>
-          <div className="flex items-center gap-2">
-            <Shield size={16} style={{ color: '#06B6D4' }} />
-            <span className="text-sm font-semibold text-slate-700">Resilience Watch Admin</span>
+              <Globe size={17} className="shrink-0" />
+              <span className="md:hidden lg:inline">View User Portal</span>
+            </Link>
+            <button
+              type="button"
+              title="Sign Out"
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-300 hover:text-red-400 text-sm transition-all hover:bg-red-500/10 md:justify-center lg:justify-start md:px-2 lg:px-4"
+            >
+              <LogOut size={17} className="shrink-0" />
+              <span className="md:hidden lg:inline">Sign Out</span>
+            </button>
           </div>
-        </div>
+        </aside>
 
-        <main className="flex-1">
-          {children}
-        </main>
+        {open && (
+          <div className="fixed inset-0 z-30 bg-black/50 md:hidden no-print" onClick={() => setOpen(false)} />
+        )}
+
+        <div className="flex-1 md:ml-20 lg:ml-64 flex flex-col min-h-screen min-w-0">
+          <div className="md:hidden no-print flex items-center gap-3 px-4 py-3 glass-nav">
+            <button
+              type="button"
+              onClick={() => setOpen(!open)}
+              className="p-2 rounded-lg text-white hover:bg-white/10"
+              aria-label={open ? 'Close admin menu' : 'Open admin menu'}
+              aria-expanded={open}
+              aria-controls="admin-sidebar"
+            >
+              {open ? <X size={20} /> : <Menu size={20} />}
+            </button>
+            <div className="flex items-center gap-2 min-w-0">
+              <Shield size={16} style={{ color: '#16B8D4' }} />
+              <span className="text-sm font-semibold text-white truncate">Resilience Watch Admin</span>
+            </div>
+          </div>
+
+          <main id="main-content" className="flex-1 min-w-0">
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   )
