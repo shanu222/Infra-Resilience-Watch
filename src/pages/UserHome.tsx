@@ -143,40 +143,6 @@ export default function UserHome() {
               )}
             </section>
 
-            {/* Field Photos */}
-            {published.some(a => a.images.length > 0) && (
-              <section className="mb-12">
-                <div className="section-eyebrow mb-1">Documentation</div>
-                <h2 className="text-xl font-bold user-ink mb-5" style={{ fontFamily: 'DM Serif Display, serif' }}>
-                  Field Photographs
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {published
-                    .flatMap(item => item.images.map(img => ({ img, item })))
-                    .slice(0, 8)
-                    .map(({ img, item }) => (
-                      <Link
-                        key={img.id}
-                        to={`/content/${item.id}`}
-                        className="relative h-36 rounded-xl overflow-hidden group"
-                        style={{ background: 'linear-gradient(135deg,#071A33,#123E68)' }}
-                      >
-                        <img
-                          src={img.dataUrl}
-                          alt={img.caption || item.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-x-0 bottom-0 p-2 text-[11px] text-white truncate"
-                          style={{ background: 'linear-gradient(to top,rgba(7,26,51,0.80),transparent)' }}>
-                          {item.title}
-                        </div>
-                      </Link>
-                    ))}
-                </div>
-              </section>
-            )}
-
             {/* Explore cards */}
             <section className="mb-12">
               <div className="section-eyebrow mb-1">Browse by category</div>
