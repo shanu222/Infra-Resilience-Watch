@@ -2,7 +2,7 @@
 
 Daily infrastructure intelligence, risks, issues and resilient solutions for Pakistan.
 
-**Observe • Assess • Advise • Build Resilience**
+**Observe • Assess • Advise • Build Resilience** | Live on Supabase
 
 ## Two separate links
 
