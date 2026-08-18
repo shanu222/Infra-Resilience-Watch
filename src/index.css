@@ -858,6 +858,83 @@ body {
   min-width: 0;
 }
 
+/* A4 export stage — off-screen clone used for PDF + print */
+.advisory-export-stage {
+  position: fixed;
+  left: -12000px;
+  top: 0;
+  width: 210mm;
+  min-width: 210mm;
+  max-width: 210mm;
+  background: #ffffff;
+  z-index: 2147483646;
+  pointer-events: none;
+  overflow: visible;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.advisory-export-frame {
+  width: 210mm;
+  min-width: 210mm;
+  max-width: 210mm;
+  background: #ffffff;
+}
+
+.advisory-export-stage .advisory-doc,
+.advisory-export-stage .advisory-doc-export {
+  width: 210mm !important;
+  max-width: 210mm !important;
+  min-width: 210mm !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.advisory-export-stage .advisory-doc .relative.min-h-full {
+  min-height: auto !important;
+}
+
+.advisory-export-stage .doc-bg-layer {
+  position: absolute !important;
+  inset: 0 !important;
+  min-height: 100% !important;
+}
+
+.advisory-export-stage .doc-content-layer {
+  position: relative !important;
+  min-height: auto !important;
+}
+
+.advisory-export-stage .print-only {
+  display: block !important;
+}
+
+.advisory-export-stage header img {
+  background: #ffffff !important;
+}
+
+.advisory-export-stage .doc-section {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.advisory-export-stage .doc-video-embed,
+.advisory-export-stage .doc-video-block iframe {
+  display: none !important;
+}
+
+.advisory-export-stage .doc-video-fallback {
+  display: block !important;
+}
+
+.advisory-export-stage img {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
 /* ============================================================
    FOCUS & ACCESSIBILITY
    ============================================================ */
@@ -896,38 +973,116 @@ input, select, textarea { outline: none; }
   }
 
   html,
-  body,
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-only { display: block !important; }
+
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  /* A4 advisory print — only the export stage is visible */
+  body.advisory-printing #root {
+    display: none !important;
+  }
+
+  body.advisory-printing #advisory-export-stage {
+    display: block !important;
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: 210mm !important;
+    min-width: 210mm !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+    overflow: visible !important;
+    page-break-after: avoid;
+  }
+
+  body.advisory-printing .advisory-export-frame {
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  body.advisory-printing .advisory-doc,
+  body.advisory-printing .advisory-doc-export {
+    width: 210mm !important;
+    max-width: 210mm !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  body.advisory-printing .advisory-doc .relative.min-h-full {
+    min-height: auto !important;
+  }
+
+  body.advisory-printing .doc-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  body.advisory-printing .doc-header {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  body.advisory-printing .doc-bg-layer,
+  body.advisory-printing .doc-content-layer,
+  body.advisory-printing .doc-section,
+  body.advisory-printing header.doc-header,
+  body.advisory-printing .advisory-doc footer {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.advisory-printing .doc-video-embed,
+  body.advisory-printing .doc-video-block iframe {
+    display: none !important;
+  }
+
+  body.advisory-printing .doc-video-fallback {
+    display: block !important;
+  }
+
+  body.advisory-printing img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  a[href]::after,
+  a[href]::before {
+    content: none !important;
+  }
+
+  /* Legacy fallback when printing without export stage */
   #root,
   .portal-shell,
   .portal-content,
   main,
   .min-h-screen {
     background: white !important;
-    min-height: auto !important;
+    min-height: 0 !important;
     height: auto !important;
     overflow: visible !important;
-  }
-
-  .print-only { display: block !important; }
-  body {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  @page {
-    size: A4;
-    margin: 12mm;
-  }
-
-  /* Detail page wrappers — remove portal padding so document fills the page */
-  body.printing-advisory-active .max-w-5xl,
-  body.printing-advisory-active .max-w-4xl {
-    max-width: none !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
   }
 
   .advisory-preview-frame {
@@ -956,59 +1111,6 @@ input, select, textarea { outline: none; }
     width: 100% !important;
     margin: 0 !important;
     overflow: visible !important;
-    min-width: 0 !important;
-  }
-
-  .advisory-doc .relative.min-h-full {
-    min-height: auto !important;
-  }
-
-  .advisory-doc img {
-    max-width: 100% !important;
-    height: auto !important;
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
-  .doc-section {
-    break-inside: avoid;
-    page-break-inside: avoid;
-    margin-bottom: 1rem !important;
-  }
-
-  .doc-header {
-    break-after: avoid;
-    page-break-after: avoid;
-  }
-
-  .doc-bg-layer,
-  .doc-content-layer,
-  .doc-section,
-  header.doc-header,
-  .advisory-doc footer {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  .doc-video-embed,
-  .doc-video-block iframe {
-    display: none !important;
-  }
-
-  .doc-video-fallback {
-    display: block !important;
-  }
-
-  a[href]::after,
-  a[href]::before {
-    content: none !important;
-  }
-
-  .printing-advisory-doc,
-  body.printing-advisory-active {
-    margin: 0;
-    padding: 0;
-    background: white;
   }
 }
 

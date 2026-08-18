@@ -1,11 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { Download, Printer, Share2, ArrowLeft, Shield, Clock, Eye } from 'lucide-react'
 import { useApp } from '../contexts/AppContext'
 import AdvisoryDocument from '../components/AdvisoryDocument'
 import SeverityBadge from '../components/SeverityBadge'
 import WatchCard from '../components/WatchCard'
-import { relatedItems, userPathFor, isContentLive, printAdvisoryDocument } from '../utils'
+import { relatedItems, userPathFor, isContentLive, printAdvisoryDocument, downloadAdvisoryPdf } from '../utils'
 import { BRAND } from '../data/constants'
 
 export default function AdvisoryDetail() {
@@ -25,6 +25,7 @@ export default function AdvisoryDetail() {
   }, [advisory?.id])
 
   const inUserPortal = !location.pathname.startsWith('/admin')
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   if (!advisory) {
     return (
@@ -41,8 +42,23 @@ export default function AdvisoryDetail() {
     )
   }
 
-  function handlePrint() {
-    printAdvisoryDocument('.advisory-preview-frame', advisory!.title)
+  async function handlePrint() {
+    try {
+      await printAdvisoryDocument(advisory!.title)
+    } catch {
+      alert('Could not open print view. Please try again.')
+    }
+  }
+
+  async function handleDownloadPdf() {
+    setPdfLoading(true)
+    try {
+      await downloadAdvisoryPdf(advisory!.title || 'infrastructure-advisory')
+    } catch {
+      alert('Could not generate PDF. Please try again or use Print → Save as PDF.')
+    } finally {
+      setPdfLoading(false)
+    }
   }
 
   function handleShare() {
@@ -105,12 +121,13 @@ export default function AdvisoryDetail() {
             </button>
             <button
               type="button"
-              onClick={handlePrint}
-              className="btn-3d btn-3d-primary flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm flex-1 sm:flex-none min-w-[4.5rem]"
+              onClick={handleDownloadPdf}
+              disabled={pdfLoading}
+              className="btn-3d btn-3d-primary flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-sm flex-1 sm:flex-none min-w-[4.5rem] disabled:opacity-60"
             >
               <Download size={14} />
-              <span className="hidden sm:inline">Download PDF</span>
-              <span className="sm:hidden">PDF</span>
+              <span className="hidden sm:inline">{pdfLoading ? 'Generating…' : 'Download PDF'}</span>
+              <span className="sm:hidden">{pdfLoading ? '…' : 'PDF'}</span>
             </button>
           </div>
         </div>

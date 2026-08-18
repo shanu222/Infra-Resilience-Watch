@@ -142,35 +142,9 @@ export function sanitizeDocText(text: string): string {
 }
 
 /**
- * Print / save as PDF using the live publish-view DOM so layout, colors,
- * and typography match the on-screen document (iframe cloning dropped Tailwind).
+ * Print / PDF export — implemented in advisoryExport.ts (A4 layout).
  */
-export function printAdvisoryDocument(_rootSelector = '.advisory-preview-frame', title = 'Infrastructure Advisory') {
-  const prevTitle = document.title
-  const safeTitle = title.replace(/[<>]/g, '').trim() || 'Infrastructure Advisory'
-  document.title = safeTitle
-  document.body.classList.add('printing-advisory-active')
-
-  const cleanup = () => {
-    document.body.classList.remove('printing-advisory-active')
-    document.title = prevTitle
-  }
-
-  window.addEventListener('afterprint', cleanup, { once: true })
-  const fallbackTimer = window.setTimeout(cleanup, 15000)
-  window.addEventListener(
-    'afterprint',
-    () => window.clearTimeout(fallbackTimer),
-    { once: true },
-  )
-
-  // Let print class apply before the browser snapshots layout.
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      window.print()
-    })
-  })
-}
+export { downloadAdvisoryPdf, printAdvisoryDocument } from './advisoryExport'
 
 export function kindToSection(kind: ContentKind): string {
   if (kind === 'case-study') return 'case-studies'
