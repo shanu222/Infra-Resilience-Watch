@@ -491,9 +491,19 @@ body {
 /* ============================================================
    ADVISORY DOCUMENT (print)
    ============================================================ */
-.advisory-doc { font-family: var(--font-sans); position: relative; }
+.advisory-doc { font-family: var(--font-sans); position: relative; min-width: 0; }
 .advisory-doc h1,.advisory-doc h2,.advisory-doc h3 { font-family: var(--font-display); }
 .doc-section { break-inside: avoid; page-break-inside: avoid; }
+.doc-bg-layer { min-height: 100%; }
+.doc-content-layer { min-height: 100%; }
+
+/* Hide raw URLs in document output */
+.advisory-doc a[href^="http"]::after,
+.advisory-doc a[href^="http"]::before,
+.printing-advisory-doc a[href^="http"]::after,
+.printing-advisory-doc a[href^="http"]::before {
+  content: none !important;
+}
 
 .advisory-preview-frame {
   width: 100%;
@@ -545,12 +555,36 @@ input, select, textarea { outline: none; }
   html,body,#root { background: white !important; height: auto !important; }
   .print-only { display: block !important; }
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  @page { size: A4; margin: 14mm 12mm 18mm 12mm; }
+  @page { size: A4; margin: 10mm; }
   .advisory-preview-frame { overflow: visible !important; box-shadow: none !important; border: 0 !important; }
   .advisory-preview-inner { min-width: 0 !important; width: 100% !important; }
   .advisory-doc { box-shadow: none !important; border: 0 !important; max-width: none !important; width: 100% !important; }
   .doc-section { break-inside: avoid; page-break-inside: avoid; }
   .doc-header { break-after: avoid; }
+  .doc-bg-layer,
+  .doc-content-layer,
+  .doc-section,
+  header.doc-header,
+  footer {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .doc-video-embed,
+  .doc-video-block iframe {
+    display: none !important;
+  }
+  .doc-video-fallback {
+    display: block !important;
+  }
+  a[href]::after,
+  a[href]::before {
+    content: none !important;
+  }
+  .printing-advisory-doc {
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
 }
 
 /* ============================================================

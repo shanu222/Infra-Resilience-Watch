@@ -5,7 +5,7 @@ import { useApp } from '../contexts/AppContext'
 import AdvisoryDocument from '../components/AdvisoryDocument'
 import SeverityBadge from '../components/SeverityBadge'
 import WatchCard from '../components/WatchCard'
-import { relatedItems, userPathFor, isContentLive } from '../utils'
+import { relatedItems, userPathFor, isContentLive, printAdvisoryDocument } from '../utils'
 import { BRAND } from '../data/constants'
 
 export default function AdvisoryDetail() {
@@ -42,7 +42,7 @@ export default function AdvisoryDetail() {
   }
 
   function handlePrint() {
-    window.print()
+    printAdvisoryDocument('.advisory-doc', advisory!.title)
   }
 
   function handleShare() {

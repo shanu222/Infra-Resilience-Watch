@@ -128,6 +128,63 @@ export function userPathFor(item: Pick<Advisory, 'id' | 'kind'>): string {
   return `/content/${item.id}`
 }
 
+/** Strip portal / deployment URLs from document text so they never appear in PDFs. */
+export function sanitizeDocText(text: string): string {
+  if (!text) return ''
+  const portalUrlPattern = /https?:\/\/[^\s]*(?:vercel\.app|localhost|\/content\/)[^\s]*/gi
+  return text
+    .split('\n')
+    .map(line => line.replace(portalUrlPattern, '').trimEnd())
+    .filter((line, i, arr) => line !== '' || (i > 0 && arr[i - 1] !== ''))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+/** Print only the advisory document (avoids browser footer showing the page URL). */
+export function printAdvisoryDocument(rootSelector = '.advisory-doc', title = 'Infrastructure Advisory') {
+  const el = document.querySelector(rootSelector)
+  if (!el) {
+    window.print()
+    return
+  }
+
+  const iframe = document.createElement('iframe')
+  iframe.setAttribute('aria-hidden', 'true')
+  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0'
+  document.body.appendChild(iframe)
+
+  const frame = iframe.contentWindow
+  const doc = iframe.contentDocument
+  if (!frame || !doc) {
+    document.body.removeChild(iframe)
+    window.print()
+    return
+  }
+
+  doc.open()
+  doc.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>')
+  doc.write(title.replace(/</g, '&lt;'))
+  doc.write('</title>')
+  document.querySelectorAll('style, link[rel="stylesheet"]').forEach(node => {
+    doc.head.appendChild(node.cloneNode(true))
+  })
+  doc.write('</head><body class="printing-advisory-doc"></body></html>')
+  doc.close()
+
+  doc.body.appendChild(el.cloneNode(true))
+  doc.body.classList.add('printing-advisory-doc')
+
+  const runPrint = () => {
+    frame.focus()
+    frame.print()
+    setTimeout(() => {
+      if (iframe.parentNode) document.body.removeChild(iframe)
+    }, 1000)
+  }
+  setTimeout(runPrint, 300)
+}
+
 export function kindToSection(kind: ContentKind): string {
   if (kind === 'case-study') return 'case-studies'
   if (kind === 'observation') return 'issues'
